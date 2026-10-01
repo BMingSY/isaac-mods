@@ -2,6 +2,8 @@
 
 GitHub 合集用于维护源码，每个 Mod 可以作为独立创意工坊项目发布。
 
+全圣心 Mod 已发布：[Steam 创意工坊页面](https://steamcommunity.com/sharedfiles/filedetails/?id=3811263689)。对应 ID 已保存在该 Mod 的 `metadata.xml` 中。
+
 游戏安装目录中附带上传工具，Windows 下的位置为：
 
 ```text
@@ -18,7 +20,7 @@ tools/ModUploader/ModUploader.exe
 4. 点击 **Upload Mod**，成功后用 **View Mod** 打开创意工坊页面检查。
 5. 若 Steam 要求接受创意工坊协议，需要通过该 Steam 账号完成。
 
-首次上传后，上传工具会给 Mod 写入创意工坊 ID。将对应 `metadata.xml` 同步回仓库，后续更新使用相同 ID，避免创建重复项目。
+首次上传后，上传工具会给 Mod 写入创意工坊 ID，并自动递增版本号。将上传后的 `metadata.xml` 同步回仓库，后续更新使用相同 ID，避免创建重复项目。
 
 ## 圣心 Mod 的发布文案
 

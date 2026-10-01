@@ -1,9 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <metadata>
-    <name>All Sacred Hearts + Stacking</name>
+    <name>全圣心 + 伤害叠加 / All Sacred Hearts + Stacking</name>
     <directory>all_sacred_hearts_stacking</directory>
-    <description>Non-quest collectible pedestals become Sacred Heart (182). Progression items are preserved. Each extra Sacred Heart applies another damage x2.3 and +1. For Repentance+; no additional mod dependencies.</description>
-    <version>1.1</version>
+    <id>3811263689</id>
+    <description>[h1]全圣心 + 伤害叠加[/h1]
+适用于《以撒的结合：忏悔+》。
+
+[list]
+[*]普通道具底座全部变为圣心（182），包括商店、普通 Boss 奖励、固定掉落和重掷后的道具。
+[*]保留全家福、照片、两块钥匙碎片、刀柄/刀刃、铲子组件、爸爸的便条、教条，以及其他带任务标记的道具。
+[*]从第二颗圣心起，每多一颗再执行一次：伤害 = 当前伤害 × 2.3 + 1。
+[*]按各玩家当前持有数量计算；失去圣心时刷新，切换房间不会重复增加伤害。
+[*]无需 REPENTOGON 或其他前置 Mod。
+[/list]
+
+[b]使用范围[/b]
+替换房间里的道具底座；金币、钥匙、炸弹、心、卡牌和饰品不属于替换对象。
+
+[b]验证情况[/b]
+已通过 Lua 语法和回调模拟检查，尚未完成游戏内实测。
+
+[url=https://github.com/BMingSY/isaac-mods]源码、安装说明和下载[/url]</description>
+    <version>1.2</version>
+    <visibility>Public</visibility>
     <tag id="Lua"/>
+    <tag id="Items"/>
     <tag id="Tweaks"/>
 </metadata>

@@ -1,6 +1,8 @@
 # 全圣心 + 伤害叠加
 
-**All Sacred Hearts + Stacking · v1.1**
+**All Sacred Hearts + Stacking · v1.2**
+
+[Steam 创意工坊订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3811263689) · [GitHub 安装包](https://github.com/BMingSY/isaac-mods/releases/download/all_sacred_hearts_stacking-v1.2/all_sacred_hearts_stacking-1.2.zip)
 
 适用于《以撒的结合：忏悔+》，使用游戏自带 Lua 接口，无需 REPENTOGON 或其他前置 Mod。
 
@@ -27,7 +29,9 @@
 
 ## 安装
 
-下载 [v1.1 安装包](https://github.com/BMingSY/isaac-mods/releases/download/all_sacred_hearts_stacking-v1.1/all_sacred_hearts_stacking-1.1.zip)，解压后将 `all_sacred_hearts_stacking` 文件夹放入游戏实际使用的 `mods` 目录，重启并在 **MODS** 菜单启用 **All Sacred Hearts + Stacking**。
+在 [Steam 创意工坊](https://steamcommunity.com/sharedfiles/filedetails/?id=3811263689)点击订阅，启动游戏后在 **MODS** 菜单启用本 Mod。
+
+也可以下载 [v1.2 安装包](https://github.com/BMingSY/isaac-mods/releases/download/all_sacred_hearts_stacking-v1.2/all_sacred_hearts_stacking-1.2.zip)，解压后将 `all_sacred_hearts_stacking` 文件夹放入游戏实际使用的 `mods` 目录，重启并启用。
 
 详见[合集安装说明](https://github.com/BMingSY/isaac-mods#安装)。
 
@@ -53,6 +57,7 @@
 
 ## 版本记录
 
+- **1.2**：首次发布到 Steam 创意工坊，补充中文发布说明、预览图和创意工坊 ID；上传工具自动递增版本号，游戏代码与 1.1 一致。
 - **1.1**：保留指定路线道具和其他带任务标记的道具；统一道具池、实体生成和底座更新时的过滤规则。
 - **1.0**：实现全部道具底座替换和重复圣心伤害叠加。
 

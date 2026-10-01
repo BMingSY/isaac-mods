@@ -4,11 +4,13 @@
 
 ## Mod 列表
 
-| Mod | 效果 | 当前版本 | 下载 |
-| --- | --- | --- | --- |
-| [全圣心 + 伤害叠加](mods/all_sacred_hearts_stacking/) | 普通道具变为圣心，重复圣心叠加伤害，保留任务和路线道具 | 1.1 | [安装包](https://github.com/BMingSY/isaac-mods/releases/download/all_sacred_hearts_stacking-v1.1/all_sacred_hearts_stacking-1.1.zip) |
+| Mod | 效果 | 当前版本 | 下载 | 创意工坊 |
+| --- | --- | --- | --- | --- |
+| [全圣心 + 伤害叠加](mods/all_sacred_hearts_stacking/) | 普通道具变为圣心，重复圣心叠加伤害，保留任务和路线道具 | 1.2 | [安装包](https://github.com/BMingSY/isaac-mods/releases/download/all_sacred_hearts_stacking-v1.2/all_sacred_hearts_stacking-1.2.zip) | [Steam 订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3811263689) |
 
 ## 安装
+
+可以直接使用上表的 **Steam 订阅** 链接安装。手动安装步骤如下：
 
 1. 下载上表中需要的 Mod 安装包，解压后得到一个独立 Mod 文件夹。
 2. 找到游戏实际使用的 `mods` 目录。可以从 Steam 的“管理 → 浏览本地文件”打开游戏目录，再查看 `savedatapath.txt` 中的 **Modding Data Path**；以游戏记录的位置为准。
@@ -29,6 +31,9 @@ scripts/
   package_mods.py
 docs/
   steam-workshop.md
+assets/
+  all_sacred_hearts_stacking/
+    preview.png
 ```
 
 ## 添加新 Mod
@@ -49,7 +54,7 @@ python3 scripts/package_mods.py all_sacred_hearts_stacking
 
 安装包生成在 `dist/` 下，名称为 `<mod目录名>-<版本>.zip`，压缩包中只有一个可直接安装的 Mod 文件夹。
 
-发布时建议每个 Mod 使用独立标签，例如 `all_sacred_hearts_stacking-v1.1`，并在对应 GitHub Release 中附上安装包。
+发布时建议每个 Mod 使用独立标签，例如 `all_sacred_hearts_stacking-v1.2`，并在对应 GitHub Release 中附上安装包。
 
 ## Steam 创意工坊
 
