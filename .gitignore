@@ -1,0 +1,8 @@
+/dist/
+__pycache__/
+*.pyc
+**/save*.dat
+**/disable.it
+**/log.txt
+.DS_Store
+Thumbs.db

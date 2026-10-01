@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+    <name>All Sacred Hearts + Stacking</name>
+    <directory>all_sacred_hearts_stacking</directory>
+    <description>Non-quest collectible pedestals become Sacred Heart (182). Progression items are preserved. Each extra Sacred Heart applies another damage x2.3 and +1. For Repentance+; no additional mod dependencies.</description>
+    <version>1.1</version>
+    <tag id="Lua"/>
+    <tag id="Tweaks"/>
+</metadata>
