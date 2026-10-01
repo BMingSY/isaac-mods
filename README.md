@@ -1,6 +1,6 @@
 # Isaac Mods · 以撒 Mod 合集
 
-《以撒的结合：忏悔+》Mod 合集，由 BMingSY 个人维护。这里存放各个 Mod 的源码、使用说明和安装包。
+《以撒的结合：忏悔+》Mod 合集。
 
 [Steam 创意工坊：全圣心 + 伤害叠加](https://steamcommunity.com/sharedfiles/filedetails/?id=3811263689) · [GitHub 下载](https://github.com/BMingSY/isaac-mods/releases)
 
