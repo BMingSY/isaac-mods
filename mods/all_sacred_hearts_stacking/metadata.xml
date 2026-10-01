@@ -17,11 +17,8 @@
 [b]使用范围[/b]
 替换房间里的道具底座；金币、钥匙、炸弹、心、卡牌和饰品不属于替换对象。
 
-[b]验证情况[/b]
-已通过 Lua 语法和回调模拟检查，尚未完成游戏内实测。
-
 [url=https://github.com/BMingSY/isaac-mods]源码、安装说明和下载[/url]</description>
-    <version>1.2</version>
+    <version>1.3</version>
     <visibility>Public</visibility>
     <tag id="Lua"/>
     <tag id="Items"/>

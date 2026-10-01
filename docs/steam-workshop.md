@@ -40,8 +40,6 @@ tools/ModUploader/ModUploader.exe
 
 无需 REPENTOGON 或其他前置 Mod。
 
-已通过 Lua 语法和回调模拟检查，尚未完成游戏内实测。
-
 源码与下载：https://github.com/BMingSY/isaac-mods
 ```
 

@@ -1,8 +1,8 @@
 # 全圣心 + 伤害叠加
 
-**All Sacred Hearts + Stacking · v1.2**
+**All Sacred Hearts + Stacking · v1.3**
 
-[Steam 创意工坊订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3811263689) · [GitHub 安装包](https://github.com/BMingSY/isaac-mods/releases/download/all_sacred_hearts_stacking-v1.2/all_sacred_hearts_stacking-1.2.zip)
+[Steam 创意工坊订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3811263689) · [GitHub 安装包](https://github.com/BMingSY/isaac-mods/releases/download/all_sacred_hearts_stacking-v1.3/all_sacred_hearts_stacking-1.3.zip)
 
 适用于《以撒的结合：忏悔+》，使用游戏自带 Lua 接口，无需 REPENTOGON 或其他前置 Mod。
 
@@ -31,7 +31,7 @@
 
 在 [Steam 创意工坊](https://steamcommunity.com/sharedfiles/filedetails/?id=3811263689)点击订阅，启动游戏后在 **MODS** 菜单启用本 Mod。
 
-也可以下载 [v1.2 安装包](https://github.com/BMingSY/isaac-mods/releases/download/all_sacred_hearts_stacking-v1.2/all_sacred_hearts_stacking-1.2.zip)，解压后将 `all_sacred_hearts_stacking` 文件夹放入游戏实际使用的 `mods` 目录，重启并启用。
+也可以下载 [v1.3 安装包](https://github.com/BMingSY/isaac-mods/releases/download/all_sacred_hearts_stacking-v1.3/all_sacred_hearts_stacking-1.3.zip)，解压后将 `all_sacred_hearts_stacking` 文件夹放入游戏实际使用的 `mods` 目录，重启并启用。
 
 详见[合集安装说明](https://github.com/BMingSY/isaac-mods#安装)。
 
@@ -41,22 +41,10 @@
 
 额外伤害叠加在游戏计算出的伤害上逐颗应用。其他 Mod 也修改伤害或替换道具时，最终结果可能受回调执行顺序影响。
 
-## 验证情况
-
-已通过 Lua 语法检查，并使用本机游戏的枚举和回调分发脚本进行了模拟检查，覆盖普通道具替换、11 个指定任务道具在各替换入口的保留、额外任务标记、空底座、分组保留、伤害叠加、失去道具、重复重算、继续游戏和多个玩家分别计算。
-
-**尚未进行游戏内实测。** 模拟检查不验证游戏引擎内部的属性计算、路线或全部物品交互；价格保留通过核对 `Morph` 的 `KeepPrice` 参数检查。
-
-游戏内可按以下步骤检查：
-
-1. 开一局普通以撒，检查宝箱房、商店和普通 Boss 奖励是否为圣心。
-2. 检查妈妈奖励的全家福/照片、天使雕像的钥匙碎片和支线刀组件是否保留。
-3. 拿两颗以上圣心，检查伤害是否随数量继续增加；反复切换房间，检查伤害是否稳定。
-
-如已开启调试控制台，`spawn 5.100.1` 应生成圣心，`spawn 5.100.327` 应保留全家福，`giveitem c182` 可用于测试多颗叠加。
 
 ## 版本记录
 
+- **1.3**：更新创意工坊介绍和安装说明。
 - **1.2**：首次发布到 Steam 创意工坊，补充中文发布说明、预览图和创意工坊 ID；上传工具自动递增版本号，游戏代码与 1.1 一致。
 - **1.1**：保留指定路线道具和其他带任务标记的道具；统一道具池、实体生成和底座更新时的过滤规则。
 - **1.0**：实现全部道具底座替换和重复圣心伤害叠加。
