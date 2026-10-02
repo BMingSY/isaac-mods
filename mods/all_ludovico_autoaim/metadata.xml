@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+    <name>全鲁多维科 + 自动索敌 / All Ludovico + Auto Aim</name>
+    <directory>all_ludovico_autoaim</directory>
+    <id>3811712323</id>
+    <description>适用于《以撒的结合：忏悔+》。
+
+普通道具底座全部变为鲁多维科科技（329），保留全家福、照片、钥匙碎片、刀柄/刀刃等任务道具。
+
+按一下任意攻击方向键开启自动索敌，再按一下关闭。长按只切换一次。
+自动追击可受伤的敌人，目标死亡后寻找下一个；没有目标时待命。
+角色上方显示 AUTO ON / AUTO OFF，切换房间保留开关状态。镜面世界正常使用。
+
+[url=https://github.com/BMingSY/isaac-mods]源码与下载[/url]</description>
+    <version>0.3</version>
+    <visibility>Public</visibility>
+    <tag id="Lua"/>
+    <tag id="Items"/>
+    <tag id="Tweaks"/>
+</metadata>

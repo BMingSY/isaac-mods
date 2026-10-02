@@ -9,6 +9,7 @@
 | Mod | 效果 | 当前版本 | 下载 | 创意工坊 |
 | --- | --- | --- | --- | --- |
 | [全圣心 + 伤害叠加](mods/all_sacred_hearts_stacking/) | 普通道具变为圣心，重复圣心叠加伤害，保留任务和路线道具 | 1.3 | [安装包](https://github.com/BMingSY/isaac-mods/releases/download/all_sacred_hearts_stacking-v1.3/all_sacred_hearts_stacking-1.3.zip) | [Steam 订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3811263689) |
+| [全鲁多维科 + 自动索敌](mods/all_ludovico_autoaim/) | 普通道具变为鲁多维科科技，按攻击方向键切换自动索敌，保留任务道具 | 0.3 | [安装包](https://github.com/BMingSY/isaac-mods/releases/download/all_ludovico_autoaim-v0.3/all_ludovico_autoaim-0.3.zip) | [Steam 订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3811712323) |
 
 ## 安装
 
