@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<costumes anm2root="gfx/characters/">
+    <costume anm2path="009x_rockbottom.anm2" type="passive" id="1"/>
+</costumes>

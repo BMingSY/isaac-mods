@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+    <name>真·谷底石 / True Rock Bottom</name>
+    <directory>true_rock_bottom</directory>
+    <id>3812009224</id>
+    <description>修改谷底石（562）：保留的历史最高属性成为后续加成的计算基准，属性降低后也能继续获得提升。
+
+例如伤害保留在 10 后，新获得的 +1 伤害加成会变成 11，新的 ×2 伤害倍率会变成 20。
+
+影响伤害、射速、移速、射程、弹速和幸运。
+
+[url=https://github.com/BMingSY/isaac-mods]源码与下载[/url]</description>
+    <version>0.4</version>
+    <visibility>Public</visibility>
+    <tag id="Lua"/>
+    <tag id="Items"/>
+    <tag id="Tweaks"/>
+</metadata>

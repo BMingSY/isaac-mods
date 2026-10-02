@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<items gfxroot="gfx/items/" version="1">
+    <passive id="1" name="True Rock Bottom" description="It's only up from here"
+        gfx="Collectibles_562_RockBottom.png" cache="all" quality="4"
+        hidden="false" craftquality="-1" tags="noeden"/>
+</items>
