@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+    <name>全鲁多维科 + 自动索敌 V2 / All Ludovico + Auto Aim V2</name>
+    <directory>all_ludovico_autoaim_v2</directory>
+    <id>3811830257</id>
+    <description>普通道具全部变为鲁多维科科技（329），保留全家福、照片、钥匙碎片、刀柄/刀刃等任务道具。
+
+修改原版鲁多维科科技的叠加效果：原版重复拾取会产生围绕主球的小球；V2 改为每份道具对应一颗同尺寸大球，共享伤害和特效，每颗大球独立索敌。
+
+按一下任意攻击方向键开启自动索敌，再按一下关闭。长按只切换一次。手动模式同时移动所有大球。
+支持手柄、镜面世界和鲁多维科激光环。
+
+与旧版“全鲁多维科 + 自动索敌”二选一启用。
+
+[url=https://github.com/BMingSY/isaac-mods]源码与下载[/url]</description>
+    <version>0.3</version>
+    <visibility>Public</visibility>
+    <tag id="Lua"/>
+    <tag id="Items"/>
+    <tag id="Tweaks"/>
+</metadata>
