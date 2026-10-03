@@ -1,0 +1,4 @@
+interface:
+  display_name: "以撒 Mod 编写"
+  short_description: "通用的以撒 Lua Mod 开发，支持新增玩法、修改原版效果与调试"
+  default_prompt: "使用 $isaac-mod-development 按我的玩法需求编写或修改以撒 Mod。"

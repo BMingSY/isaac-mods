@@ -29,3 +29,7 @@
 ## 问题与建议
 
 问题和建议可以提交到 [Issues](https://github.com/BMingSY/isaac-mods/issues)，请写明 Mod 名称、游戏版本、复现步骤和使用的其他 Mod。
+
+## Skill
+
+[以撒 Mod 编写](skills/isaac-mod-development/SKILL.md)
