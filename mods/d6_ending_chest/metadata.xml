@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+    <name>D6 通关宝箱 / D6 Ending Chest</name>
+    <directory>d6_ending_chest</directory>
+    <id>3813446674</id>
+    <description>适用于《以撒的结合：忏悔+》。
+
+使用 D6 时，将当前房间可重置的普通道具底座变成通关大宝箱（Big Chest）。宝箱出现约一秒后可以接触，进入后播放虚空层／精神错乱的结局并结束本局；其他楼层也使用同一结局。
+
+D6 正常消耗充能，汽车电池不会重复生成宝箱。不会替换道具池，也不会自动给予角色 D6。保留全家福、照片、钥匙碎片、刀柄／刀刃、铲子组件、爸爸的便条、教条及其他任务道具。原有通关宝箱及 D100、永恒 D6 等其他骰子不变。
+
+变出的宝箱可以随房间保存，换房或保存退出后继续有效。
+
+[url=https://github.com/BMingSY/isaac-mods]源码与下载[/url]</description>
+    <version>0.1</version>
+    <visibility>Public</visibility>
+    <tag id="Lua"/>
+    <tag id="Items"/>
+    <tag id="Tweaks"/>
+</metadata>
