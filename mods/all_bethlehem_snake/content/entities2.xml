@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entities anm2root="gfx/" version="5">
+    <entity name="Bethlehem Snake Follower" id="3" variant="1000" subtype="0"
+        anm2path="003.236_star of bethlehem.anm2" baseHP="0" stageHP="0"
+        collisionDamage="0" collisionRadius="0" collisionMass="0"
+        numGridCollisionPoints="0" gridCollision="none" friction="1" shadowSize="0"/>
+    <!-- Kept only to remove saved 0.1/0.2 effects during migration. -->
+    <entity name="Bethlehem Snake Aura" id="1000" variant="1000" subtype="0"
+        anm2path="1000.112_Hallowed Ground.anm2" baseHP="0" stageHP="0"
+        collisionDamage="0" collisionRadius="0" collisionMass="0"
+        numGridCollisionPoints="0" gridCollision="none" friction="1" shadowSize="0"/>
+</entities>

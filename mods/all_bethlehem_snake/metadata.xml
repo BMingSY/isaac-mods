@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+    <name>全启明星 + 贪吃蛇队列 / All Bethlehem + Snake</name>
+    <directory>all_bethlehem_snake</directory>
+    <description>适用于《以撒的结合：忏悔+》。无需 REPENTOGON 或其他前置 Mod。
+
+普通道具变为启明星／伯列恒之星（651），保留全家福、照片、钥匙碎片、刀柄／刀刃等任务道具。保留原版及汉化 Mod 的道具名称和说明。
+
+每份启明星对应一颗星星。队首沿原版路线引路，后排按顺序慢慢跟进，组成贪吃蛇队列。整队速度由最后一颗星星的位置决定，落后玩家时提速，超过玩家后才减速。换房不会把队列搬到玩家身边，保存退出后续玩可恢复队列。
+
+站在任意一颗星星的光环内，都能获得全部启明星叠加后的效果：伤害 ×1.2^数量、射速 ×2.5^数量、追踪眼泪，普通受伤免伤概率为 1−0.5^数量。重叠区域不会额外重复叠加，射速最高 120 发／秒。
+
+请关闭旧版「全伯列恒之星 + 光环叠加」及其他替换全部道具的 Mod。
+
+[url=https://github.com/BMingSY/isaac-mods]源码与下载[/url]</description>
+    <version>0.5</version>
+    <visibility>Public</visibility>
+    <tag id="Lua"/>
+    <tag id="Items"/>
+    <tag id="Tweaks"/>
+</metadata>

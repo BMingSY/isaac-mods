@@ -12,6 +12,7 @@
 | [全鲁多维科 + 自动索敌](mods/all_ludovico_autoaim/) | 普通道具变为鲁多维科科技，按攻击方向键切换自动索敌，保留任务道具 | 0.3 | [安装包](https://github.com/BMingSY/isaac-mods/releases/download/all_ludovico_autoaim-v0.3/all_ludovico_autoaim-0.3.zip) | [Steam 订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3811712323) |
 | [全鲁多维科 + 自动索敌 V2](mods/all_ludovico_autoaim_v2/) | 普通道具变为鲁多维科科技，重复拾取改为同尺寸大球，共享属性、独立索敌，保留任务道具 | 0.3 | [安装包](https://github.com/BMingSY/isaac-mods/releases/download/all_ludovico_autoaim_v2-v0.3/all_ludovico_autoaim_v2-0.3.zip) | [Steam 订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3811830257) |
 | [真·谷底石](mods/true_rock_bottom/) | 保留的历史最高属性成为后续加成的计算基准 | 0.4 | [安装包](https://github.com/BMingSY/isaac-mods/releases/download/true_rock_bottom-v0.4/true_rock_bottom-0.4.zip) | [Steam 订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3812009224) |
+| [全启明星 + 贪吃蛇队列](mods/all_bethlehem_snake/) | 普通道具变为启明星，多颗星星沿原版路线排队，按队尾位置调速，全部光环共享叠加效果 | 0.5 | [安装包](https://github.com/BMingSY/isaac-mods/releases/download/all_bethlehem_snake-v0.5/all_bethlehem_snake-0.5.zip) | — |
 
 ## 安装
 
