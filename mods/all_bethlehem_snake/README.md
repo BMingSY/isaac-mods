@@ -1,6 +1,6 @@
 # 全启明星 + 贪吃蛇队列
 
-[安装包](https://github.com/BMingSY/isaac-mods/releases/download/all_bethlehem_snake-v0.5/all_bethlehem_snake-0.5.zip)
+[Steam 订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3813399534) · [安装包](https://github.com/BMingSY/isaac-mods/releases/download/all_bethlehem_snake-v0.5/all_bethlehem_snake-0.5.zip)
 
 普通道具变为启明星／伯列恒之星（651），保留全家福、照片、钥匙碎片、刀柄／刀刃等任务道具。
 
