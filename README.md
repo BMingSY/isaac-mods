@@ -2,7 +2,7 @@
 
 《以撒的结合：忏悔+》Mod 合集。
 
-[Steam 创意工坊：全圣心 + 伤害叠加](https://steamcommunity.com/sharedfiles/filedetails/?id=3811263689) · [GitHub 下载](https://github.com/BMingSY/isaac-mods/releases)
+[GitHub 下载](https://github.com/BMingSY/isaac-mods/releases)
 
 ## Mod 列表
 
