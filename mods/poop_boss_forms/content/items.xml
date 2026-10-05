@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<items gfxroot="gfx/items/" version="1">
+    <active id="1" name="Poop Boss Rush" description="Charge like a boss!" gfx="poop_boss_rush.png"
+        maxcharges="1" chargetype="normal" initcharge="1" quality="2" hidden="true"
+        craftquality="-1" tags="quest noeden" />
+</items>

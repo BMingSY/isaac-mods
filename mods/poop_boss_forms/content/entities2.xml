@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entities anm2root="gfx/" version="5">
+    <entity name="Poop Boss Avatar" id="1000" variant="1000" subtype="0" anm2path="poop_boss_forms/dingle.anm2"
+        baseHP="0" collisionDamage="0" collisionMass="0" collisionRadius="0"
+        numGridCollisionPoints="1" friction="1" shadowSize="12" stageHP="0"
+        boss="0" champion="0" shutdoors="false" />
+</entities>

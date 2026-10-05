@@ -1,0 +1,32 @@
+<?xml version='1.0' encoding='utf-8'?>
+<metadata>
+    <name>坨坨变身 / Poop Boss Forms</name>
+    <directory>poop_boss_forms</directory>
+    <id>3814236696</id>
+    <description>使用原版主动道具“大便”（ID 36），变身为坨坨、红坨坨、黑坨坨或滑坨坨！适用于忏悔／忏悔+，无需 REPENTOGON。
+
+[b]四种 Boss 形态[/b]
+保留普通角色移动。坨坨、红坨坨和滑坨坨使用三发扇形攻击，黑坨坨使用八方向弹幕；每第 4 次攻击召唤对应友军或生成红大便。变身持续整局，换房和保存续玩后保留，再次使用大便可切换形态。
+
+[b]操作[/b]
+• 轻按并松开 Ctrl：选择下一次变身，同时按原版规则切换口袋物品。选择图标固定在硬币右侧。
+• 使用大便：变成选中的 Boss，正常消耗 1 格充能。
+• 攻击键：释放对应攻击。
+• 变身后获得一充能永久副手“Poop Boss Rush”。用 Ctrl 选中后按 Q 冲刺；卡牌和胶囊仍可正常切换使用。原有永久副手会被冲刺替换。
+
+[b]武器与互动[/b]
+支持硫磺火、妈刀、科技、科技 X 和剖腹产的 Boss 阵型，攻击继承角色属性与对应特效。大宝剑保留原版挥砍和蓄力回旋斩，剑气改为 Boss 阵型；玄秘魔眼可操控泪弹。
+炸弹获得屁股炸弹效果。接触大便障碍物会将其摧毁并招募对应的友好粪滴，地面保留残渣，往返房间不会重复生成。
+
+[b]使用说明[/b]
+推荐用自带大便的小蓝人开局测试。Mod 不会自动给予大便。安装或更新后请完全退出并重启游戏；避免同时启用手动安装版和创意工坊版。
+其他特殊武器优先保留原版攻击，未逐一验证全部道具组合。在线联机及全面改写攻击、外观或输入的 Mod 组合尚未验证。
+
+[url=https://github.com/BMingSY/isaac-mods/tree/main/mods/poop_boss_forms]详细说明与源码[/url]
+[url=https://github.com/BMingSY/isaac-mods/releases/tag/poop_boss_forms-v1.1]手动下载 v1.1[/url]</description>
+    <version>1.1</version>
+    <visibility>Public</visibility>
+    <tag id="Lua" />
+    <tag id="Items" />
+    <tag id="Active Items" />
+</metadata>
