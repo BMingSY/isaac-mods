@@ -7,9 +7,11 @@
 
 • Ctrl 选择形态，使用大便变身。
 • 保留普通移动，攻击变为对应 Boss 的弹幕与召唤，兼容大部分道具。
-• 获得 1 充能的副手冲刺，替换原副手，可与卡牌、胶囊切换使用。
+• 获得 1 充能的副手冲刺，替换原副手。
 • 炸弹变为屁股炸弹。
-• 接触大便障碍物会将其摧毁，生成对应的友好粪滴。</description>
+• 接触大便障碍物会将其摧毁，生成对应的友好粪滴。
+
+[url=https://github.com/BMingSY/isaac-mods/tree/main/mods/poop_boss_forms]GitHub 源码[/url]</description>
     <version>1.2</version>
     <visibility>Public</visibility>
     <tag id="Lua" />
