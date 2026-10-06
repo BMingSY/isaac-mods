@@ -65,7 +65,7 @@ local function stateFor(player)
             form = rules.validForm(record.form, #forms) and record.form or nil,
             dashCharge = dashCharge,
             pocketInstalled = record.pocketInstalled == true,
-            cooldown = 0, volleys = 0, lastAim = Vector(0, 1), dropFrames = 0,
+            volleys = 0, lastAim = Vector(0, 1), dropFrames = 0,
             facingRight = record.facingRight == true,
         }
         saved[key] = nil
@@ -90,7 +90,7 @@ local function alive(player)
 end
 
 local function active(player)
-    return alive(player) and player:AreControlsEnabled() and player:IsExtraAnimationFinished()
+    return alive(player) and player:AreControlsEnabled()
 end
 
 local function readAction(player, action)
@@ -100,13 +100,17 @@ local function readAction(player, action)
     return value
 end
 
-local function rawAim(player)
-    return Vector(readAction(player, ButtonAction.ACTION_SHOOTRIGHT) - readAction(player, ButtonAction.ACTION_SHOOTLEFT),
-        readAction(player, ButtonAction.ACTION_SHOOTDOWN) - readAction(player, ButtonAction.ACTION_SHOOTUP))
+local function shootingAim(player)
+    -- Use the engine's world-space input, including the mirror world's inversion.
+    -- Bypass our dash-only input gate while choosing the next dash direction.
+    readingInput = true
+    local aim = player:GetShootingInput()
+    readingInput = false
+    return aim
 end
 
 local function direction(player, state)
-    local aim = rawAim(player)
+    local aim = shootingAim(player)
     if aim:LengthSquared() < 0.04 then aim = player:GetMovementInput() end
     if aim:LengthSquared() < 0.04 then aim = state.lastAim end
     return aim:Normalized()
@@ -142,8 +146,22 @@ local function animation(state, name)
     if state.avatar and state.avatar:Exists() then state.avatar:GetSprite():Play(name, true) end
 end
 
+local function hidePlayer(player, state)
+    -- Visible=false also hides the engine's weapon charge indicators. Keep
+    -- native rendering enabled and make only the character sprite transparent.
+    local color = player:GetColor()
+    player:GetSprite().Color = Color(color.R, color.G, color.B, 0, color.RO, color.GO, color.BO)
+    player.Visible = true
+    state.hidden = true
+end
+
 local function showPlayer(player, state)
-    if state.hidden then player.Visible = true; state.hidden = nil end
+    if state.hidden then
+        local color = player:GetColor()
+        player:GetSprite().Color = Color(color.R, color.G, color.B, 1, color.RO, color.GO, color.BO)
+        player.Visible = true
+        state.hidden = nil
+    end
 end
 
 local function updateAvatar(player, state)
@@ -173,10 +191,10 @@ local function updateAvatar(player, state)
     avatar.SpriteOffset = player.SpriteOffset
     -- Keep native action timing/effects, but never reveal Isaac's sprite during
     -- hurt, pickup or item-use animations. These bosses have no matching poses.
-    player.Visible = false
-    state.hidden = true
+    hidePlayer(player, state)
     avatar.Visible = player:IsDead() or player:GetDamageCooldown() <= 0 or game:GetFrameCount() % 4 < 2 or state.dash ~= nil
-    sprite.Color = player:GetColor()
+    local color = player:GetColor()
+    sprite.Color = Color(color.R, color.G, color.B, 1, color.RO, color.GO, color.BO)
     if player:IsDead() then
         if not state.dead then sprite:Play("Death", true) end
         state.dead = true
@@ -277,13 +295,6 @@ local function countNativeVolley(player, state)
     countVolley(player, state)
 end
 
-local function fireVolley(player, state, aim, kind, charge)
-    local form = forms[state.form]
-    if weapons.fire(player, state, form, aim, kind, charge) == 0 then return end
-    countVolley(player, state)
-    state.cooldown = weapons.charged(kind) and 0 or rules.interval(player.MaxFireDelay, form.interval)
-end
-
 local function convertPoop(player)
     local room = game:GetRoom()
     local center = room:GetGridIndex(player.Position)
@@ -322,7 +333,6 @@ end
 
 local function startDash(player, state)
     if not state.form or state.dash or not active(player) then return false end
-    weapons.cancelCharge(state)
     local form = forms[state.form]
     state.dash = { remaining = form.dashes, timer = form.dashFrames, rest = 0,
         aim = direction(player, state), hits = {}, previous = player.Position,
@@ -392,8 +402,7 @@ function mod:OnPrePoop(_, _, player, flags)
     if (flags & UseFlag.USE_CARBATTERY) == 0 then
         local state = stateFor(player)
         if state.dash then finishDash(player, state) end
-        weapons.cancelCharge(state)
-        state.form, state.cooldown, state.volleys = state.selected, 12, 0
+        state.form, state.volleys = state.selected, 0
         state.avatarForm = nil
         installPocket(player, state)
         save()
@@ -421,16 +430,9 @@ function mod:OnInput(entity, hook, action)
     if not state then return end
     -- Leave DROP and PILLCARD entirely to the engine: the pocket active uses
     -- the same Ctrl/Q queue as Dark Arts, cards and pills.
-    if state.form and action >= ButtonAction.ACTION_SHOOTLEFT and action <= ButtonAction.ACTION_SHOOTDOWN then
-        if weapons.native(weapons.kind(player)) and not state.dash and active(player) then return end
-        if hook == InputHook.GET_ACTION_VALUE then
-            -- Allow native tear/effect steering after this player's update.
-            -- Native charge weapons also read these values: keep them blocked
-            -- during the player's own update and at the start of every frame.
-            if state.steeringFrame ~= game:GetFrameCount() then return 0 end
-        else
-            return false
-        end
+    if state.form and state.dash and action >= ButtonAction.ACTION_SHOOTLEFT and action <= ButtonAction.ACTION_SHOOTDOWN then
+        if hook == InputHook.GET_ACTION_VALUE then return 0 end
+        return false
     end
 end
 mod:AddCallback(ModCallbacks.MC_INPUT_ACTION, mod.OnInput)
@@ -453,19 +455,13 @@ function mod:OnPlayerUpdate(player)
         end
     end
     if not state.form then return end
-    state.steeringFrame = nil
     installPocket(player, state)
     if active(player) and not game:IsPaused() then
-        -- Fetus/sword and other native weapons retain the engine's controls.
-        -- Manually fired weapons read raw input and suppress duplicate fire.
-        if state.dash or not weapons.native(weapons.kind(player)) then player:SetShootingCooldown(2) end
-        local aim = rawAim(player)
+        local aim = shootingAim(player)
         if aim:LengthSquared() >= 0.04 then state.lastAim = aim:Normalized() end
-        if state.dash then updateDash(player, state)
-        else
-            state.cooldown = math.max(0, state.cooldown - 1)
-            local kind, charge, shotAim = weapons.request(player, state, forms[state.form], aim)
-            if kind then fireVolley(player, state, shotAim, kind, charge) end
+        if state.dash then
+            player:SetShootingCooldown(2)
+            updateDash(player, state)
         end
         local facing = state.dash and state.dash.aim or aim
         if facing:LengthSquared() < 0.04 then facing = player:GetMovementInput() end
@@ -473,7 +469,6 @@ function mod:OnPlayerUpdate(player)
         convertPoop(player)
     else
         if state.dash then finishDash(player, state) end
-        if not game:IsPaused() then weapons.cancelCharge(state) end
     end
     updateAvatar(player, state)
 end
@@ -482,9 +477,8 @@ mod:AddCallback(ModCallbacks.MC_POST_PEFFECT_UPDATE, mod.OnPlayerUpdate)
 function mod:OnPlayerVisualUpdate(player)
     if not started then return end
     local state = peek(player)
-    if state and state.form then state.steeringFrame = game:GetFrameCount() end
     -- Some native extra animations change Visible after the effect update.
-    if state and state.form and state.hidden and not player:IsCoopGhost() then player.Visible = false end
+    if state and state.form and state.hidden and not player:IsCoopGhost() then hidePlayer(player, state) end
 end
 mod:AddCallback(ModCallbacks.MC_POST_PLAYER_UPDATE, mod.OnPlayerVisualUpdate)
 
@@ -520,14 +514,34 @@ function mod:OnBombUpdate(bomb)
 end
 mod:AddCallback(ModCallbacks.MC_POST_BOMB_UPDATE, mod.OnBombUpdate)
 
+-- Native multishot knives/lasers can be parented to the primary weapon.
+-- Follow only the same weapon type; fetal/familiar attacks stay independent.
+local function weaponOwner(entity)
+    local kind = entity.Type
+    for _ = 1, 8 do
+        local parent = entity.Parent
+        if not parent or parent == entity then return end
+        local player = parent:ToPlayer()
+        if player then return player end
+        local data = parent:GetData().PoopBossWeapon
+        if parent.Type ~= kind or (data and data.copy) then return end
+        entity = parent
+    end
+end
+
 function mod:OnKnifeUpdate(knife)
     weapons.updateKnife(knife)
-    local player = knife.Parent and knife.Parent:ToPlayer()
+    local player = weaponOwner(knife)
     local state = peek(player)
     if state and state.form and not state.dash and active(player)
-        and weapons.observeSword(knife, player) then countNativeVolley(player, state) end
+        and weapons.expandKnife(knife, player, forms[state.form]) then countNativeVolley(player, state) end
 end
 mod:AddCallback(ModCallbacks.MC_POST_KNIFE_UPDATE, mod.OnKnifeUpdate)
+
+function mod:OnTearFired(tear)
+    weapons.observeTearFired(tear)
+end
+mod:AddCallback(ModCallbacks.MC_POST_FIRE_TEAR, mod.OnTearFired)
 
 function mod:OnTearUpdate(tear)
     local player = tear.Parent and tear.Parent:ToPlayer()
@@ -536,6 +550,14 @@ function mod:OnTearUpdate(tear)
         and weapons.expandTear(tear, player, state, forms[state.form]) then countNativeVolley(player, state) end
 end
 mod:AddCallback(ModCallbacks.MC_POST_TEAR_UPDATE, mod.OnTearUpdate)
+
+function mod:OnLaserUpdate(laser)
+    local player = weaponOwner(laser)
+    local state = peek(player)
+    if state and state.form and not state.dash and active(player)
+        and weapons.expandLaser(laser, player, forms[state.form]) then countNativeVolley(player, state) end
+end
+mod:AddCallback(ModCallbacks.MC_POST_LASER_UPDATE, mod.OnLaserUpdate)
 
 function mod:OnDamage(entity, _, flags)
     local state = peek(entity:ToPlayer())
@@ -562,7 +584,6 @@ function mod:OnRender()
     eachPlayer(function(player)
         local state = peek(player)
         if not state or not alive(player) then return end
-        if state.form then weapons.renderCharge(player, state) end
         if not ownsPoop(player) then return end
         for index, sprite in ipairs(icons) do
             local chosen = index == state.selected
@@ -581,7 +602,6 @@ function mod:OnNewRoom()
             if state.avatar and state.avatar:Exists() then state.avatar:Remove() end
             state.avatar, state.avatarForm = nil, nil
             state.dropFrames = 0
-            weapons.cancelCharge(state)
             if state.form then updateAvatar(state.player, state) end
         end
     end
@@ -634,4 +654,4 @@ function mod:OnCommand(command, parameters)
 end
 mod:AddCallback(ModCallbacks.MC_EXECUTE_CMD, mod.OnCommand)
 
-Isaac.DebugString(string.format("[Poop Boss Forms] v1.1 loaded; dash=%d, avatar=%d; four forms; no REPENTOGON required.", DASH, AVATAR))
+Isaac.DebugString(string.format("[Poop Boss Forms] v1.2 loaded; dash=%d, avatar=%d; four forms; no REPENTOGON required.", DASH, AVATAR))

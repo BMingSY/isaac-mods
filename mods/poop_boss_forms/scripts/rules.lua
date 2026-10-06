@@ -5,10 +5,6 @@ function rules.clamp(value, low, high)
     return math.max(low, math.min(high, value))
 end
 
-function rules.interval(maxFireDelay, multiplier)
-    return math.max(8, math.floor((maxFireDelay + 1) * multiplier + 0.5))
-end
-
 function rules.dashDamage(damage, count)
     -- A complete combo hitting the same enemy once per dash totals 25x + 10.
     return (25 * damage + 10) / count

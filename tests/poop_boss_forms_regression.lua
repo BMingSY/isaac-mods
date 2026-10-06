@@ -45,7 +45,7 @@ function vm:Rotated(degrees)
     local r=math.rad(degrees); return Vector(self.X*math.cos(r)-self.Y*math.sin(r),self.X*math.sin(r)+self.Y*math.cos(r))
 end
 function vm:GetAngleDegrees() return math.deg(math.atan(self.Y,self.X)) end
-function Color(...) return {...} end
+function Color(r,g,b,a,ro,go,bo) return {r,g,b,a,ro,go,bo,R=r,G=g,B=b,A=a,RO=ro or 0,GO=go or 0,BO=bo or 0} end
 function KColor(...) return {...} end
 function EntityRef(entity) return {Entity=entity} end
 function GetPtrHash(entity) return entity.hash end
@@ -72,6 +72,11 @@ function mod:SaveData(text) saveText=text end
 function mod:LoadData() return saveText end
 function mod:HasData() return saveText~="" end
 function include(path) return dofile("mods/poop_boss_forms/"..path..".lua") end
+EntityLaser = {ShootAngle=function(variant,pos,angle,timeout,offset,player)
+    local l=player:FireBrimstone(Vector(1,0):Rotated(angle),player,1)
+    l.Variant=variant;l.Position=pos;l.Timeout=timeout;l.PositionOffset=offset
+    return l
+end}
 local nextHash = 0
 local function entity(kind, variant, subtype, position, spawner)
     nextHash=nextHash+1
@@ -115,6 +120,10 @@ local function newPlayer(controller)
     end
     function p:SetActiveCharge(charge,slot) self.charges[slot]=charge;self.batteries[slot]=0 end
     function p:AddCollectible(id,charge) self.items[0]=id;self.charges[0]=charge end
+    function p:GetShootingInput()
+        return self.shootingInput or Vector(Input.GetActionValue(5,self.ControllerIndex)-Input.GetActionValue(4,self.ControllerIndex),
+            Input.GetActionValue(7,self.ControllerIndex)-Input.GetActionValue(6,self.ControllerIndex))
+    end
     function p:GetMovementInput() return self.movement or Vector.Zero end
     function p:GetDamageCooldown() return self.invincible or 0 end
     function p:SetMinDamageCooldown(value) self.invincible=value end
@@ -131,16 +140,22 @@ local function newPlayer(controller)
         tear.Height=-23;tear.FallingSpeed=0;tear.FallingAcceleration=0.05
         for name,value in pairs(self.nativeTear or {}) do tear[name]=value end
         if simulateReentry then tear.FrameCount=1;mod:OnTearUpdate(tear) end
+        mod:OnTearFired(tear)
         return tear
     end
     function p:FireBrimstone(direction,source,multiplier)
         local shot=entity(EntityType.ENTITY_LASER,1,0,self.Position,self)
         shot.AngleDegrees=direction:GetAngleDegrees();shot.CollisionDamage=self.Damage*multiplier
-        shot.TearFlags=self.TearFlags or 0;return shot
+        shot.TearFlags=self.TearFlags or 0;shot.Parent=self
+        shot.PositionOffset=Vector.Zero;shot.ParentOffset=Vector.Zero;shot.Timeout=10;shot.MaxDistance=260
+        function shot:IsCircleLaser() return self.circle or false end
+        function shot:SetMaxDistance(v) self.MaxDistance=v end
+        function shot:SetOneHit(v) self.OneHit=v end
+        return shot
     end
     function p:FireKnife(parent,offset,cantOverwrite,subtype,variant)
         local shot=entity(EntityType.ENTITY_KNIFE,variant,subtype,self.Position,self)
-        shot.Parent=parent;shot.RotationOffset=offset;shot.cantOverwrite=cantOverwrite
+        shot.Parent=parent;shot.Rotation=0;shot.RotationOffset=offset;shot.cantOverwrite=cantOverwrite
         shot.CollisionDamage=self.Damage;shot.TearFlags=self.TearFlags or 0
         function shot:Shoot(charge,range) self.Charge=charge;self.MaxDistance=range;self.flying=true end
         function shot:IsFlying() return self.flying or false end
@@ -153,7 +168,7 @@ local function newPlayer(controller)
     end
     function p:FireTechXLaser(position,velocity,radius,source,multiplier)
         local shot=self:FireBrimstone(velocity,source,multiplier)
-        shot.Position=position;shot.Velocity=velocity;shot.Radius=radius;return shot
+        shot.Position=position;shot.Velocity=velocity;shot.Radius=radius;shot.circle=true;shot.SubType=2;return shot
     end
     function p:AddFriendlyDip(subtype,pos)
         local f=entity(EntityType.ENTITY_FAMILIAR,FamiliarVariant.DIP,subtype,pos,self);f.Player=self;return f
@@ -248,6 +263,10 @@ local function tap(p)
     setInput(p,ButtonAction.ACTION_DROP,1);tick(p)
     setInput(p,ButtonAction.ACTION_DROP,0);tick(p)
 end
+local function nativeTear(p,angle)
+    local tear=p:FireTear(p.Position,Vector(9,0):Rotated(angle or 0),false,false,false,p,1)
+    tear.FrameCount=1;mod:OnTearUpdate(tear);return tear
+end
 local function count(kind,variant) return #Isaac.FindByType(kind,variant or -1) end
 
 eq(#forms,4,"all vanilla forms")
@@ -256,8 +275,6 @@ near(rules.segmentDistanceSquared(0,2,-10,0,10,0),4,"swept collision")
 near(rules.segmentDistanceSquared(15,0,-10,0,10,0),25,"segment endpoint")
 eq(rules.touchingPoop(0,0,30,0,10),true,"poop contact")
 eq(rules.touchingPoop(0,0,40,40,10),false,"no diagonal remote conversion")
-eq(rules.interval(10,2.2),24,"base attack cooldown")
-eq(rules.interval(-0.9,2.2),8,"bounded attack rate")
 
 local p=reset()
 eq(p:GetData()[key].form,nil,"no automatic transformation")
@@ -277,44 +294,46 @@ for _,action in ipairs({ButtonAction.ACTION_LEFT,ButtonAction.ACTION_RIGHT,Butto
     eq(mod:OnInput(p,InputHook.GET_ACTION_VALUE,action),nil,"normal movement passes through")
 end
 for _,action in ipairs({ButtonAction.ACTION_SHOOTLEFT,ButtonAction.ACTION_SHOOTRIGHT,ButtonAction.ACTION_SHOOTUP,ButtonAction.ACTION_SHOOTDOWN}) do
-    eq(mod:OnInput(p,InputHook.GET_ACTION_VALUE,action),0,"native charge weapons cannot read direction during player update")
-    eq(mod:OnInput(p,InputHook.IS_ACTION_PRESSED,action),false,"native firing stays blocked while holding shoot")
-    eq(mod:OnInput(p,InputHook.IS_ACTION_TRIGGERED,action),false,"native firing stays blocked on a new press")
+    eq(mod:OnInput(p,InputHook.GET_ACTION_VALUE,action),nil,"native charge weapons receive direction during player update")
+    eq(mod:OnInput(p,InputHook.IS_ACTION_PRESSED,action),nil,"native firing receives held shoot")
+    eq(mod:OnInput(p,InputHook.IS_ACTION_TRIGGERED,action),nil,"native firing receives new press")
 end
 mod:OnPlayerVisualUpdate(p)
 for _,action in ipairs({ButtonAction.ACTION_SHOOTLEFT,ButtonAction.ACTION_SHOOTRIGHT,ButtonAction.ACTION_SHOOTUP,ButtonAction.ACTION_SHOOTDOWN}) do
     eq(mod:OnInput(p,InputHook.GET_ACTION_VALUE,action),nil,"tear steering reads direction after the player update")
 end
 frame=frame+1
-eq(mod:OnInput(p,InputHook.GET_ACTION_VALUE,ButtonAction.ACTION_SHOOTRIGHT),0,"new frame blocks weapons before the first player callback")
+eq(mod:OnInput(p,InputHook.GET_ACTION_VALUE,ButtonAction.ACTION_SHOOTRIGHT),nil,"native input remains enabled at frame start")
 for _,hook in ipairs({InputHook.GET_ACTION_VALUE,InputHook.IS_ACTION_PRESSED,InputHook.IS_ACTION_TRIGGERED}) do
     eq(mod:OnInput(p,hook,ButtonAction.ACTION_DROP),nil,"Ctrl is always available to the native pocket queue")
     eq(mod:OnInput(p,hook,ButtonAction.ACTION_PILLCARD),nil,"Q is always handled by the native pocket queue")
 end
 tick(p)
-eq(p.Visible,false,"boss appearance hides player")
-p.extraFinished=false;tick(p);eq(p.Visible,false,"native pickup and use poses stay hidden")
+eq(p:GetSprite().Color.A,0,"boss appearance hides player")
+eq(p.Visible,true,"native charge indicators retain their rendering path")
+eq(state.avatar:GetSprite().Color.A,1,"boss remains opaque while native character is transparent")
+p.extraFinished=false;tick(p);eq(p:GetSprite().Color.A,0,"native pickup and use poses stay hidden")
 eq(state.avatar.Visible,true,"boss remains visible throughout extra animation")
 eq(state.avatar:GetSprite().anim,"Idle","unavailable special poses use existing boss idle")
-p.Visible=true;mod:OnPlayerVisualUpdate(p);eq(p.Visible,false,"late native visibility reset is suppressed")
-p.extraFinished=true;tick(p);eq(p.Visible,false,"boss restored after pickup")
-p.invincible=10;tick(p,4);eq(p.Visible,false,"hurt flashing never reveals original player")
+p.Visible=true;mod:OnPlayerVisualUpdate(p);eq(p:GetSprite().Color.A,0,"late native visibility reset is suppressed")
+p.extraFinished=true;tick(p);eq(p:GetSprite().Color.A,0,"boss restored after pickup")
+p.invincible=10;tick(p,4);eq(p:GetSprite().Color.A,0,"hurt flashing never reveals original player")
 p.invincible=0;p.dead=true;mod:OnDeathUpdate()
-eq(p.Visible,false,"death never reveals original player")
+eq(p:GetSprite().Color.A,0,"death never reveals original player")
 eq(state.avatar:GetSprite().anim,"Death","existing boss death animation is reused")
 eq(state.avatar.Visible,true,"dead boss is visible despite invulnerability")
 mod:OnDeathUpdate();eq(state.avatar:GetSprite().anim,"Death","death does not revert to idle")
 p.dead=false;tick(p);eq(state.avatar:GetSprite().anim,"Idle","revival restores boss idle")
 mod:OnNewRoom();eq(state.form,2,"form persists through room")
-eq(p.Visible,false,"room transition does not expose original player")
-tick(p);eq(p.Visible,false,"avatar recreated after room")
+eq(p:GetSprite().Color.A,0,"room transition does not expose original player")
+tick(p);eq(p:GetSprite().Color.A,0,"avatar recreated after room")
 
 for index,form in ipairs(forms) do
     p=reset();state=p:GetData()[key];state.selected=index;usePoop(p)
-    state.cooldown=0;setInput(p,ButtonAction.ACTION_SHOOTRIGHT,1);tick(p)
+    setInput(p,ButtonAction.ACTION_SHOOTRIGHT,1);tick(p);nativeTear(p)
     eq(count(EntityType.ENTITY_TEAR),form.shots,form.name.." bullet count")
     for _,tear in ipairs(Isaac.FindByType(EntityType.ENTITY_TEAR,-1)) do near(tear.CollisionDamage,p.Damage,"damage scales with player") end
-    for _=1,3 do state.cooldown=0;tick(p) end
+    for _=1,3 do tick(p);nativeTear(p) end
     if form.summon=="red" then
         local red=room:GetGridEntityFromPos(p.Position+Vector(65,0));eq(red:GetVariant(),1,"red champion creates red poop")
     elseif form.summon=="spider" then eq(count(EntityType.ENTITY_FAMILIAR,FamiliarVariant.BLUE_SPIDER),2,"black summons spiders")
@@ -333,83 +352,91 @@ for index,form in ipairs(forms) do
     if form.skin=="dangle" then eq(count(EntityType.ENTITY_EFFECT,EffectVariant.PLAYER_CREEP_BLACK)>0,true,"slippery form leaves friendly creep") end
 end
 
-p=reset();state=usePoop(p)
-local modes={
-    {kind="brimstone",weapon=WeaponType.WEAPON_BRIMSTONE,type=EntityType.ENTITY_LASER},
-    {kind="knife",weapon=WeaponType.WEAPON_KNIFE,type=EntityType.ENTITY_KNIFE},
-    {kind="technology",weapon=WeaponType.WEAPON_LASER,type=EntityType.ENTITY_LASER},
-    {kind="techx",weapon=WeaponType.WEAPON_TECH_X,type=EntityType.ENTITY_LASER},
-}
-for _,mode in ipairs(modes) do
-    for index,form in ipairs(forms) do
-        p=reset();state=usePoop(p);state.form=index;state.cooldown=0
-        p.weapon=mode.weapon;p.Damage=7;p.TearFlags=TearFlags.TEAR_HOMING|TearFlags.TEAR_POISON
-        setInput(p,ButtonAction.ACTION_SHOOTRIGHT,1)
-        if weapons.charged(mode.kind) then
-            tick(p,weapons.chargeFrames(p,mode.kind,form))
-            eq(count(mode.type),0,"charged weapons wait for release: "..mode.kind)
-            setInput(p,ButtonAction.ACTION_SHOOTRIGHT,0)
-        end
-        tick(p)
-        eq(count(mode.type),form.shots,mode.kind.." uses the boss projectile count")
-        eq(count(EntityType.ENTITY_TEAR),0,"special weapons replace the tear volley")
-        eq(state.volleys,1,"weapon spread counts as one volley")
-        for i,shot in ipairs(Isaac.FindByType(mode.type,-1)) do
-            near(shot.CollisionDamage,7,"weapon damage inherits the panel")
-            eq(shot.TearFlags,p.TearFlags,"native weapon effects retained")
-            local expected=form.shots==8 and (i-1)*45 or (i-2)*13
-            local actual=mode.kind=="knife" and shot.Rotation+shot.RotationOffset or shot.AngleDegrees
-            near((actual-expected+180)%360-180,0,"weapon spread has the correct angle")
-            if mode.kind=="knife" then
-                eq(shot.cantOverwrite,true,"throw does not replace original knife")
-                near(shot.MaxDistance,p.TearRange,"knife inherits player range")
-                shot.flying=false;mod:OnKnifeUpdate(shot)
-                eq(shot:Exists(),false,"returned bonus knives are removed")
-            end
-        end
+-- Every native projectile gets its boss spread, including multishot volleys.
+for index,form in ipairs(forms) do
+    for _,n in ipairs({1,2,3,4}) do
+        p=reset();state=usePoop(p);state.form=index
+        for i=1,n do nativeTear(p,(i-(n+1)/2)*10) end
+        eq(count(EntityType.ENTITY_TEAR),n*form.shots,"native multishot multiplied by boss pattern")
+        eq(state.volleys,1,"simultaneous native multishot counts as one volley")
     end
+    for _,weapon in ipairs({WeaponType.WEAPON_BRIMSTONE,WeaponType.WEAPON_LASER,WeaponType.WEAPON_TECH_X}) do
+        p=reset();state=usePoop(p);state.form=index;p.weapon=weapon
+        local source=p:FireBrimstone(Vector(1,0),p,1)
+        source.FrameCount=1;source.CollisionDamage=8.25;source.TearFlags=123;source.Timeout=18
+        if weapon==WeaponType.WEAPON_TECH_X then source.circle=true;source.SubType=2;source.Radius=42;source.Velocity=Vector(9,0) end
+        mod:OnLaserUpdate(source)
+        eq(count(EntityType.ENTITY_LASER),form.shots,"native laser boss pattern")
+        for _,l in ipairs(Isaac.FindByType(EntityType.ENTITY_LASER,-1)) do
+            near(l.CollisionDamage,8.25,"native laser damage copied")
+            eq(l.TearFlags,123,"native laser effects copied")
+            local copy=l:GetData().PoopBossWeapon
+            if copy and copy.original then
+                source.AngleDegrees=45
+                mod:OnLaserUpdate(l)
+                near(l.AngleDegrees,45+copy.angle,"extra beam follows native steering at its boss offset")
+            end
+            mod:OnLaserUpdate(l)
+        end
+        eq(count(EntityType.ENTITY_LASER),form.shots,"laser spread cannot recurse")
+        eq(state.volleys,1,"laser spread counts once")
+    end
+    p=reset();state=usePoop(p);state.form=index;p.weapon=WeaponType.WEAPON_KNIFE
+    local k=p:FireKnife(p,5,false,0,0);k.Rotation=90;k:Shoot(0.4,156)
+    mod:OnKnifeUpdate(k)
+    eq(count(EntityType.ENTITY_KNIFE),form.shots,"native throw expands once")
+    mod:OnKnifeUpdate(k);eq(count(EntityType.ENTITY_KNIFE),form.shots,"flying knife cannot expand each frame")
+    for _,copy in ipairs(Isaac.FindByType(EntityType.ENTITY_KNIFE,-1)) do
+        near(copy.MaxDistance,156,"copy preserves native partial charge range")
+        copy.flying=false;mod:OnKnifeUpdate(copy)
+    end
+    eq(count(EntityType.ENTITY_KNIFE),1,"only copies removed on return")
+    tick(p);k:Shoot(1,260);mod:OnKnifeUpdate(k)
+    eq(count(EntityType.ENTITY_KNIFE),form.shots,"same native knife can launch a second spread")
+end
+-- Split offspring may have the player as both parent and spawner but never
+-- receive the engine's post-fire callback. They must not multiply again.
+p=reset();state=usePoop(p)
+local split=entity(EntityType.ENTITY_TEAR,0,0,p.Position,p);split.Parent=p;split.FrameCount=1
+mod:OnTearUpdate(split)
+eq(count(EntityType.ENTITY_TEAR),1,"secondary split tear is not expanded again")
+eq(state.volleys,0,"secondary split cannot trigger a summon")
+
+-- Native multishot can form a parent chain instead of direct player ownership.
+for _,kind in ipairs({"knife","laser"}) do
+    p=reset();state=usePoop(p)
+    p.weapon=kind=="knife" and WeaponType.WEAPON_KNIFE or WeaponType.WEAPON_BRIMSTONE
+    local first
+    for i=1,4 do
+        local shot
+        if kind=="knife" then shot=p:FireKnife(p,i*5,false,0,0);shot:Shoot(1,200)
+        else shot=p:FireBrimstone(Vector(1,0):Rotated(i*5),p,1);shot.FrameCount=1 end
+        if first then shot.Parent=first else first=shot end
+        if kind=="knife" then mod:OnKnifeUpdate(shot) else mod:OnLaserUpdate(shot) end
+    end
+    eq(count(kind=="knife" and EntityType.ENTITY_KNIFE or EntityType.ENTITY_LASER),12,"all four native chained weapons get the spread")
+    eq(state.volleys,1,"chained multishot counts once")
 end
 
-p=reset();state=usePoop(p);state.cooldown=0;p.weapon=WeaponType.WEAPON_BRIMSTONE
-setInput(p,ButtonAction.ACTION_SHOOTRIGHT,1);tick(p,3)
-setInput(p,ButtonAction.ACTION_SHOOTRIGHT,0);tick(p)
-eq(count(EntityType.ENTITY_LASER),0,"partial brimstone charge cancels without a volley")
-eq(state.volleys,0,"cancelled charge cannot trigger summons")
-setInput(p,ButtonAction.ACTION_SHOOTRIGHT,1);tick(p,5)
-mod:OnNewRoom();eq(state.weaponCharge,0,"room change cancels weapon charge")
-tick(p,5);mod:OnUseDash(DASH,nil,p,0)
-eq(state.weaponCharge,0,"dash cancels weapon charge")
-state.dash=nil;tick(p,5);p.extraFinished=false;tick(p)
-eq(state.weaponCharge,0,"item animation cancels stale weapon charge")
-p.extraFinished=true;tick(p,5);p.weapon=WeaponType.WEAPON_TEARS;tick(p)
-eq(state.weaponCharge,0,"losing the weapon discards its charge")
-eq(count(EntityType.ENTITY_TEAR),3,"losing the weapon restores boss tears")
-
-p=reset();state=usePoop(p);state.cooldown=0;p.weapon=WeaponType.WEAPON_KNIFE
-setInput(p,ButtonAction.ACTION_SHOOTRIGHT,1);tick(p,4)
-setInput(p,ButtonAction.ACTION_SHOOTRIGHT,0);tick(p)
-local thrown=Isaac.FindByType(EntityType.ENTITY_KNIFE,-1)
-eq(#thrown,3,"partial knife charge still throws a fan")
-eq(thrown[1].Charge<1,true,"partial knife charge retains its charge fraction")
-setInput(p,ButtonAction.ACTION_SHOOTRIGHT,1);tick(p,40)
-eq(state.weaponCharge,0,"knives must return before charging another volley")
-for _,knife in ipairs(thrown) do knife.flying=false;mod:OnKnifeUpdate(knife) end
-tick(p);eq(state.weaponCharge,1,"next knife charge starts after return")
-local ordinaryKnife=p:FireKnife(p,0,false,0,0)
-mod:OnKnifeUpdate(ordinaryKnife);eq(ordinaryKnife:Exists(),true,"other knives are not cleaned up")
-
-p=reset();state=usePoop(p);state.cooldown=0;p.weapon=WeaponType.WEAPON_BRIMSTONE
-state.volleys=3;setInput(p,ButtonAction.ACTION_SHOOTRIGHT,1)
-tick(p,weapons.chargeFrames(p,"brimstone",forms[1]))
-setInput(p,ButtonAction.ACTION_SHOOTRIGHT,0);tick(p)
-eq(count(EntityType.ENTITY_FAMILIAR,FamiliarVariant.DIP),2,"fourth weapon volley still summons")
+p=reset();state=usePoop(p);p.extraFinished=false
+setInput(p,ButtonAction.ACTION_SHOOTRIGHT,1)
+eq(mod:OnUseDash(DASH,nil,p,0).Discharge,true,"pickup animation does not veto a native pocket use")
+tick(p);eq(state.dash~=nil,true,"pickup animation does not immediately cancel rush")
+p.control=false;tick(p);eq(state.dash,nil,"disabled controls still stop rush")
+p.control=true;p.shootingInput=Vector(-1,0)
+eq(mod:OnUseDash(DASH,nil,p,0).Discharge,true,"rush restarts after disabled controls")
+near(state.dash.aim.X,-1,"rush uses engine world direction instead of raw right key")
+p=reset();state=usePoop(p);p.weapon=WeaponType.WEAPON_BRIMSTONE;p.FireDelay=0
+mod:OnNewRoom();tick(p)
+eq(p.shootingCooldown,nil,"room callbacks do not reset native charge or impose a fire cooldown")
+eq(p.FireDelay,0,"room callbacks leave native fire delay intact")
 
 -- Native fetus/sword attacks must retain controls and their engine metadata.
 for _,weapon in ipairs({WeaponType.WEAPON_FETUS,WeaponType.WEAPON_SPIRIT_SWORD,
     WeaponType.WEAPON_BOMBS,WeaponType.WEAPON_ROCKETS,WeaponType.WEAPON_MONSTROS_LUNGS,
     WeaponType.WEAPON_LUDOVICO_TECHNIQUE,WeaponType.WEAPON_BONE,WeaponType.WEAPON_NOTCHED_AXE,
     WeaponType.WEAPON_URN_OF_SOULS,WeaponType.WEAPON_UMBILICAL_WHIP}) do
-    p=reset();state=usePoop(p);state.cooldown=0;p.weapon=weapon
+    p=reset();state=usePoop(p);p.weapon=weapon
     setInput(p,ButtonAction.ACTION_SHOOTRIGHT,1);tick(p)
     eq(count(EntityType.ENTITY_TEAR),0,"native weapon is not replaced with ordinary tears")
     for _,hook in ipairs({InputHook.GET_ACTION_VALUE,InputHook.IS_ACTION_PRESSED,InputHook.IS_ACTION_TRIGGERED}) do
@@ -461,7 +488,7 @@ for index,form in ipairs(forms) do
         end
     end
     eq(count(EntityType.ENTITY_KNIFE),2,"sword does not recursively expand")
-    local beam=p:FireTear(p.Position,Vector(0,12),false,false,false,p,1);beam.Variant=TearVariant.SWORD_BEAM;beam.FrameCount=1
+    local beam=p:FireTear(p.Position,Vector(0,12),false,false,false,p,1);beam.Variant=TearVariant.SWORD_BEAM;beam.FrameCount=1;beam:GetData().PoopBossPrimaryTear=nil
     mod:OnTearUpdate(beam)
     eq(count(EntityType.ENTITY_TEAR),form.shots,"sword beams use matching boss pattern")
     eq(state.volleys,1,"sword beams do not double count summons")
@@ -486,7 +513,7 @@ local effectColor=Color(0.4,0.9,0.2,1)
 p.nativeTear={Variant=TearVariant.TOOTH,CollisionDamage=p.Damage*3.2,
     TearFlags=TearFlags.TEAR_HOMING|TearFlags.TEAR_POISON|TearFlags.TEAR_PIERCING,
     Color=effectColor,Scale=1.8,Height=-28,FallingSpeed=-2,FallingAcceleration=0.01}
-state.cooldown=0;setInput(p,ButtonAction.ACTION_SHOOTRIGHT,1);tick(p)
+setInput(p,ButtonAction.ACTION_SHOOTRIGHT,1);tick(p);nativeTear(p)
 for _,tear in ipairs(Isaac.FindByType(EntityType.ENTITY_TEAR,-1)) do
     eq(tear.TearFlags,p.nativeTear.TearFlags,"native tear effect flags preserved")
     eq(tear.Variant,TearVariant.TOOTH,"native proc variant preserved")
