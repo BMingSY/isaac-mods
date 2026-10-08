@@ -13,6 +13,7 @@ local PRIORITY = 1000000
 local started = false
 local savedPlayers = {}
 local runtime = {}
+local legacyPlayers = {}
 local repairInventoryOnContinue = false
 
 -- Work in tears per second, where a higher number is always better.
@@ -63,7 +64,7 @@ local function ownsRock(player)
     return player:HasCollectible(TRUE_ROCK) or player:HasCollectible(ROCK)
 end
 
-local function playerKey(player)
+local function playerSlot(player)
     local hash = GetPtrHash(player)
     for index = 0, game:GetNumPlayers() - 1 do
         local main = Isaac.GetPlayer(index)
@@ -78,18 +79,79 @@ local function playerKey(player)
     return "extra:" .. tostring(player.InitSeed)
 end
 
+local forms = {
+    [PlayerType.PLAYER_THEFORGOTTEN] = "forgotten",
+    [PlayerType.PLAYER_THESOUL] = "soul",
+    [PlayerType.PLAYER_LAZARUS_B] = "lazarus",
+    [PlayerType.PLAYER_LAZARUS2_B] = "deadLazarus",
+}
+
 local function getState(player)
+    local hash = GetPtrHash(player)
     local data = player:GetData()
-    local state = data[KEY]
-    if not state or runtime[GetPtrHash(player)] ~= state then
-        local key = playerKey(player)
-        state = {key = key, records = savedPlayers[key] or {}, pending = true,
+    local group = runtime[hash]
+    if not group or group.data ~= data then
+        group = {slot = playerSlot(player), data = data, states = {}}
+        runtime[hash] = group
+    end
+    local slot = group.slot
+    local form = forms[player:GetPlayerType()]
+    local key = form and (slot .. ":" .. form) or slot
+    local state = group.states[form or "default"]
+    if not state then
+        -- Old saves only identify the player slot. Recover that entry for the
+        -- first visible form; an overwritten second form cannot be recovered.
+        state = {key = key, slot = slot,
+            records = savedPlayers[key] or legacyPlayers[slot] or {}, pending = true,
             needsHistoryRepair = repairInventoryOnContinue}
         savedPlayers[key] = nil
-        data[KEY] = state
-        runtime[GetPtrHash(player)] = state
+        legacyPlayers[slot] = nil
+        group.states[form or "default"] = state
     end
+    -- The Forgotten changes type on the same entity; Flip changes entity.
+    -- Bind the current form in both cases, keeping dormant forms in runtime.
+    data[KEY] = state
     return state
+end
+
+local function clearState(state)
+    state.records = {}
+    state.pending = false
+    state.wasOwned = false
+    state.seedPeak = nil
+end
+
+local function forgetRock(player, state)
+    clearState(state)
+    local playerType = player:GetPlayerType()
+    if playerType == PlayerType.PLAYER_THEFORGOTTEN
+        or playerType == PlayerType.PLAYER_THESOUL then
+        -- Both forms share the main inventory. Losing the item must also
+        -- clear the dormant form, without touching the separate sub-player.
+        local group = runtime[GetPtrHash(player)]
+        for _, form in ipairs({"forgotten", "soul"}) do
+            local key = state.slot .. ":" .. form
+            savedPlayers[key] = nil
+            if group.states[form] then
+                clearState(group.states[form])
+            end
+        end
+    end
+end
+
+local function suspendInMines(player, state)
+    if player:HasCurseMistEffect() or game:GetRoom():HasCurseMist() then
+        -- HasCollectible returns false while items are disabled, even though
+        -- the real inventory still owns them. Do not apply or erase records.
+        state.suspended = true
+        state.pending = true
+        return true
+    end
+    if state.suspended then
+        state.suspended = nil
+        state.pending = true
+    end
+    return false
 end
 
 local function evaluate(player, flags)
@@ -198,20 +260,17 @@ function mod:OnCache(player, cacheFlag)
     if not started or not byFlag[cacheFlag] then
         return
     end
-    local existing = player:GetData()[KEY]
-    if existing and (existing.sampling or existing.converting) then
+    local state = getState(player)
+    if state.sampling or state.converting then
+        return
+    end
+    if suspendInMines(player, state) then
         return
     end
     if not ownsRock(player) then
-        if existing then
-            existing.records = {}
-            existing.pending = false
-            existing.wasOwned = false
-            existing.seedPeak = nil
-        end
+        forgetRock(player, state)
         return
     end
-    local state = getState(player)
     if state.applying then
         local record = state.records[byFlag[cacheFlag].name]
         if record then
@@ -233,11 +292,11 @@ mod:AddPriorityCallback(ModCallbacks.MC_EVALUATE_CACHE, PRIORITY, mod.OnCache)
 
 local function updatePlayer(player)
     local state = getState(player)
+    if suspendInMines(player, state) then
+        return
+    end
     if not ownsRock(player) then
-        state.records = {}
-        state.pending = false
-        state.seedPeak = nil
-        state.wasOwned = false
+        forgetRock(player, state)
         return
     end
     if not state.wasOwned then
@@ -325,20 +384,28 @@ local function save()
         return
     end
     local players = {}
-    for _, state in pairs(runtime) do
-        players[state.key] = state.records
+    -- A continued run may be saved again before Flip/the Forgotten exposes
+    -- the other form. Preserve its still-unclaimed record as well.
+    for key, records in pairs(savedPlayers) do
+        players[key] = records
     end
-    mod:SaveData(json.encode({version = 1, inventoryHudVersion = 1,
+    for _, group in pairs(runtime) do
+        for _, state in pairs(group.states) do
+            players[state.key] = state.records
+        end
+    end
+    mod:SaveData(json.encode({version = 2, inventoryHudVersion = 1,
         seed = game:GetSeeds():GetStartSeed(), players = players}))
 end
 
 function mod:OnStart(isContinued)
     runtime = {}
     savedPlayers = {}
+    legacyPlayers = {}
     repairInventoryOnContinue = isContinued
     if isContinued and mod:HasData() then
         local ok, data = pcall(json.decode, mod:LoadData())
-        if ok and type(data) == "table" and data.version == 1
+        if ok and type(data) == "table" and (data.version == 1 or data.version == 2)
             and data.seed == game:GetSeeds():GetStartSeed()
             and type(data.players) == "table" then
             repairInventoryOnContinue = data.inventoryHudVersion ~= 1
@@ -353,7 +420,11 @@ function mod:OnStart(isContinued)
                             valid[stat.name] = record
                         end
                     end
-                    savedPlayers[key] = valid
+                    if data.version == 1 then
+                        legacyPlayers[key] = valid
+                    else
+                        savedPlayers[key] = valid
+                    end
                 end
             end
         end

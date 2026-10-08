@@ -10,7 +10,7 @@
 影响伤害、射速、移速、射程、弹速和幸运。
 
 [url=https://github.com/BMingSY/isaac-mods]源码与下载[/url]</description>
-    <version>0.4</version>
+    <version>0.5</version>
     <visibility>Public</visibility>
     <tag id="Lua"/>
     <tag id="Items"/>
