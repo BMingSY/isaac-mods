@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+    <name>队伍 DPS / Party DPS</name>
+    <directory>party_dps</directory>
+    <id>3817783724</id>
+    <description>左下角显示自己与队友的 DPS、累计伤害和伤害占比，按输出排序。支持本场战斗和整局统计，按敌人实际损失的生命值计算伤害。
+
+F6：打开设置。
+F7：切换本场／整局统计。
+F8：显示／隐藏面板。
+F9：解锁／锁定面板，解锁后可用鼠标拖动标题栏。
+
+支持 Mod Config Menu，可调整面板大小、背景透明度和位置，设置自动保存。
+
+支持 isaac-lan 联机，房主统计全队伤害并同步给队友，分房战斗也会计入。房主和需要面板的队友均需启用本 Mod。
+
+源码：https://github.com/BMingSY/isaac-mods</description>
+    <version>0.1.2</version>
+    <visibility>Public</visibility>
+    <tag id="Lua"/>
+    <tag id="Tweaks"/>
+</metadata>
