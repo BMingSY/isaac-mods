@@ -1,3 +1,4 @@
+-- Keep the legacy registration name so existing mod saves remain accessible.
 local mod = RegisterMod("All Bethlehem + Snake", 1)
 local game = Game()
 local chain = include("scripts.chain")
@@ -14,7 +15,6 @@ if FOLLOWER <= 0 or AURA <= 0 then
     Isaac.DebugString("[Bethlehem Snake] Entity definitions were not loaded")
     return
 end
-local COLLECTIBLE = PickupVariant.PICKUP_COLLECTIBLE
 local RADIUS = auraState.RADIUS
 local FOLLOWER_DATA = "BethlehemSnakeFollower"
 local AURA_DATA = "BethlehemSnakeAura"
@@ -24,46 +24,6 @@ local states = {}
 local restored = {}
 local guideSamples = {}
 local paceMap
-
-local PROTECTED_ITEMS = {
-    [CollectibleType.COLLECTIBLE_POLAROID] = true,
-    [CollectibleType.COLLECTIBLE_NEGATIVE] = true,
-    [CollectibleType.COLLECTIBLE_KEY_PIECE_1] = true,
-    [CollectibleType.COLLECTIBLE_KEY_PIECE_2] = true,
-    [CollectibleType.COLLECTIBLE_KNIFE_PIECE_1] = true,
-    [CollectibleType.COLLECTIBLE_KNIFE_PIECE_2] = true,
-    [CollectibleType.COLLECTIBLE_BROKEN_SHOVEL_1] = true,
-    [CollectibleType.COLLECTIBLE_BROKEN_SHOVEL_2] = true,
-    [CollectibleType.COLLECTIBLE_MOMS_SHOVEL] = true,
-    [CollectibleType.COLLECTIBLE_DADS_NOTE] = true,
-    [CollectibleType.COLLECTIBLE_DOGMA] = true,
-}
-
-local function shouldReplace(itemId)
-    if itemId <= 0 or itemId == STAR or PROTECTED_ITEMS[itemId] then return false end
-    local config = Isaac.GetItemConfig():GetCollectible(itemId)
-    return not (config and config:HasTags(ItemConfig.TAG_QUEST))
-end
-
-function mod:OnGetCollectible(selected)
-    if shouldReplace(selected) then return STAR end
-end
-mod:AddPriorityCallback(ModCallbacks.MC_POST_GET_COLLECTIBLE, CallbackPriority.LATE, mod.OnGetCollectible)
-
-function mod:OnEntitySpawn(entityType, variant, subtype, position, velocity, spawner, seed)
-    if entityType == EntityType.ENTITY_PICKUP and variant == COLLECTIBLE and shouldReplace(subtype) then
-        return { entityType, variant, STAR, seed }
-    end
-end
-mod:AddCallback(ModCallbacks.MC_PRE_ENTITY_SPAWN, mod.OnEntitySpawn)
-
-function mod:OnPickupUpdate(pickup)
-    if not shouldReplace(pickup.SubType) then return end
-    local options = pickup.OptionsPickupIndex
-    pickup:Morph(EntityType.ENTITY_PICKUP, COLLECTIBLE, STAR, true, true, true)
-    pickup.OptionsPickupIndex = options
-end
-mod:AddCallback(ModCallbacks.MC_POST_PICKUP_UPDATE, mod.OnPickupUpdate, COLLECTIBLE)
 
 local function valid(entity)
     return entity and entity:Exists() and not entity:IsDead()
