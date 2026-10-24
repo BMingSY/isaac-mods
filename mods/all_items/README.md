@@ -1,5 +1,7 @@
 # All Items Into One
 
+[Steam 订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3825974753)
+
 适用于《以撒的结合：忏悔+》。
 
 将普通道具统一替换为指定道具，覆盖道具池、商店、Boss 奖励、固定掉落和重掷后的道具。

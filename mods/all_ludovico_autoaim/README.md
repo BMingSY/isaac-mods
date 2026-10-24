@@ -6,6 +6,6 @@
 
 与 Ludovico Auto Aim V2 二选一启用。
 
-全道具替换功能已移至 [All Items Into One](../all_items/)。需要全鲁多维科时，同时启用该 Mod，将目标道具 ID 设为 329。
+全道具替换功能已移至 [All Items Into One](https://steamcommunity.com/sharedfiles/filedetails/?id=3825974753)。需要全鲁多维科时，同时启用该 Mod，将目标道具 ID 设为 329。
 
 [Steam 订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3811712323)

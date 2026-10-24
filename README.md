@@ -6,16 +6,16 @@
 
 ## Mod 列表
 
-源码已将道具替换拆分为独立的 **All Items Into One**；四个效果 Mod 可单独启用，需要全道具玩法时再搭配使用。以下标注「待发布」的版本尚未更新到创意工坊。
+道具替换已拆分为独立的 **[All Items Into One](https://steamcommunity.com/sharedfiles/filedetails/?id=3825974753)**；四个效果 Mod 可单独启用，需要全道具玩法时再搭配使用。
 
 | Mod | 效果 | 当前版本 | 下载 | 创意工坊 |
 | --- | --- | --- | --- | --- |
-| [All Items Into One](mods/all_items/) | 按配置的道具 ID 替换普通道具，保留任务和路线道具 | 0.1（待发布） | — | 待发布 |
-| [Sacred Heart Stacking](mods/all_sacred_hearts_stacking/) | 重复圣心叠加伤害 | 1.4（待发布） | — | [Steam 订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3811263689) |
-| [Ludovico Auto Aim](mods/all_ludovico_autoaim/) | 持有鲁多维科时，按攻击方向键切换自动索敌 | 0.4（待发布） | — | [Steam 订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3811712323) |
-| [Ludovico Auto Aim V2](mods/all_ludovico_autoaim_v2/) | 每份鲁多维科对应一颗同尺寸大球，共享属性、独立索敌 | 0.4（待发布） | — | [Steam 订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3811830257) |
+| [All Items Into One](mods/all_items/) | 按配置的道具 ID 替换普通道具，保留任务和路线道具 | 0.2 | — | [Steam 订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3825974753) |
+| [Sacred Heart Stacking](mods/all_sacred_hearts_stacking/) | 重复圣心叠加伤害 | 1.4 | — | [Steam 订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3811263689) |
+| [Ludovico Auto Aim](mods/all_ludovico_autoaim/) | 持有鲁多维科时，按攻击方向键切换自动索敌 | 0.4 | — | [Steam 订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3811712323) |
+| [Ludovico Auto Aim V2](mods/all_ludovico_autoaim_v2/) | 每份鲁多维科对应一颗同尺寸大球，共享属性、独立索敌 | 0.4 | — | [Steam 订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3811830257) |
 | [真·谷底石](mods/true_rock_bottom/) | 保留的历史最高属性成为后续加成的计算基准 | 0.5 | [安装包](https://github.com/BMingSY/isaac-mods/releases/download/true_rock_bottom-v0.5/true_rock_bottom-0.5.zip) | [Steam 订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3812009224) |
-| [Bethlehem Snake](mods/all_bethlehem_snake/) | 多颗启明星沿原版路线排队，按队尾位置调速，共享叠加光环 | 0.6（待发布） | — | [Steam 订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3813399534) |
+| [Bethlehem Snake](mods/all_bethlehem_snake/) | 多颗启明星沿原版路线排队，按队尾位置调速，共享叠加光环 | 0.6 | — | [Steam 订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3813399534) |
 | [D6 通关宝箱](mods/d6_ending_chest/) | D6 将可重置的普通道具变为通关大宝箱，接触后触发虚空层结局，保留任务道具 | 0.1 | [安装包](https://github.com/BMingSY/isaac-mods/releases/download/d6_ending_chest-v0.1/d6_ending_chest-0.1.zip) | [Steam 订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3813446674) |
 | [坨坨变身](mods/poop_boss_forms/) | 大便变身为坨坨／滑坨坨及原版变异，Ctrl 选择形态，Boss 弹幕与召唤，一充能副手冲刺，屁股炸弹和接触大便招募粪滴 | 1.2 | [安装包](https://github.com/BMingSY/isaac-mods/releases/download/poop_boss_forms-v1.2/poop_boss_forms-1.2.zip) | [Steam 订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3814236696) |
 | [队伍 DPS](mods/party_dps/) | 左下角独立 DPS 排行，显示自己／队友伤害与占比，支持 Mod Config Menu 及 isaac-lan 房主同步 | 0.1.2 | [安装包](https://github.com/BMingSY/isaac-mods/releases/download/party_dps-v0.1.2/party_dps-0.1.2.zip) | [Steam 订阅](https://steamcommunity.com/sharedfiles/filedetails/?id=3817783724) |

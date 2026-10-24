@@ -2,6 +2,7 @@
 <metadata>
     <name>All Items Into One</name>
     <directory>all_items</directory>
+    <id>3825974753</id>
     <description>适用于《以撒的结合：忏悔+》。
 
 将普通道具统一替换为指定道具，覆盖道具池、商店、Boss 奖励、固定掉落和重掷后的道具。
@@ -11,7 +12,7 @@
 保留任务和路线道具，不改变角色已持有的道具、饰品和消耗品。可单独启用，也可搭配独立的效果 Mod。
 
 [url=https://github.com/BMingSY/isaac-mods]源码[/url]</description>
-    <version>0.1</version>
+    <version>0.2</version>
     <visibility>Public</visibility>
     <tag id="Lua"/>
     <tag id="Items"/>
