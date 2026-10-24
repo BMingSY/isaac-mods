@@ -1,10 +1,10 @@
+-- Keep the legacy registration name so existing mod saves remain accessible.
 local mod = RegisterMod("All Ludovico V2 + Independent Auto Aim", 1)
 local game = Game()
 local statusFont = Font()
 statusFont:Load("font/terminus8.fnt")
 
 local LUDOVICO = CollectibleType.COLLECTIBLE_LUDOVICO_TECHNIQUE -- 329
-local COLLECTIBLE = PickupVariant.PICKUP_COLLECTIBLE
 local ARRIVAL_DISTANCE = 1
 local AIM_SLOWDOWN_DISTANCE = 8
 local BALL_DATA = "AllLudovicoV2Ball"
@@ -24,61 +24,6 @@ local playerStates = {}
 local roomEntities = {}
 local roomEntitiesFrame = -1
 local readingPhysicalInput = false
-
--- Keep progression items even if another mod changes their quest tags.
-local PROTECTED_ITEMS = {
-    [CollectibleType.COLLECTIBLE_POLAROID] = true,
-    [CollectibleType.COLLECTIBLE_NEGATIVE] = true,
-    [CollectibleType.COLLECTIBLE_KEY_PIECE_1] = true,
-    [CollectibleType.COLLECTIBLE_KEY_PIECE_2] = true,
-    [CollectibleType.COLLECTIBLE_KNIFE_PIECE_1] = true,
-    [CollectibleType.COLLECTIBLE_KNIFE_PIECE_2] = true,
-    [CollectibleType.COLLECTIBLE_BROKEN_SHOVEL_1] = true,
-    [CollectibleType.COLLECTIBLE_BROKEN_SHOVEL_2] = true,
-    [CollectibleType.COLLECTIBLE_MOMS_SHOVEL] = true,
-    [CollectibleType.COLLECTIBLE_DADS_NOTE] = true,
-    [CollectibleType.COLLECTIBLE_DOGMA] = true,
-}
-
-local function shouldReplace(itemId)
-    if itemId <= 0 or itemId == LUDOVICO or PROTECTED_ITEMS[itemId] then
-        return false
-    end
-    local config = Isaac.GetItemConfig():GetCollectible(itemId)
-    return not (config and config:HasTags(ItemConfig.TAG_QUEST))
-end
-
-function mod:OnGetCollectible(selectedCollectible)
-    if shouldReplace(selectedCollectible) then
-        return LUDOVICO
-    end
-end
-
-mod:AddPriorityCallback(
-    ModCallbacks.MC_POST_GET_COLLECTIBLE,
-    CallbackPriority.LATE,
-    mod.OnGetCollectible
-)
-
-function mod:OnEntitySpawn(entityType, variant, subtype, position, velocity, spawner, seed)
-    if entityType == EntityType.ENTITY_PICKUP and variant == COLLECTIBLE
-        and shouldReplace(subtype) then
-        return { entityType, variant, LUDOVICO, seed }
-    end
-end
-
-mod:AddCallback(ModCallbacks.MC_PRE_ENTITY_SPAWN, mod.OnEntitySpawn)
-
-function mod:OnPickupUpdate(pickup)
-    if not shouldReplace(pickup.SubType) then
-        return
-    end
-    local optionsIndex = pickup.OptionsPickupIndex
-    pickup:Morph(EntityType.ENTITY_PICKUP, COLLECTIBLE, LUDOVICO, true, true, true)
-    pickup.OptionsPickupIndex = optionsIndex
-end
-
-mod:AddCallback(ModCallbacks.MC_POST_PICKUP_UPDATE, mod.OnPickupUpdate, COLLECTIBLE)
 
 local function getState(player)
     local hash = GetPtrHash(player)

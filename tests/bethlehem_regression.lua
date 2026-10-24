@@ -391,11 +391,6 @@ advance(6)
 -- must come from its owner, not the inventory of the visiting player.
 expectStats(second, 1, "visitor uses the guide owner's stack")
 
-for _, id in pairs(CollectibleType) do
-    check(mod:OnGetCollectible(id) == nil, "preserve Star and protected route item " .. id)
-end
-check(mod:OnGetCollectible(900) == nil, "preserve quest-tagged mod item")
-check(mod:OnGetCollectible(1) == 651, "replace ordinary item")
 local chain = include("scripts.chain")
 near(chain.fireDelay(10, 10000), -0.75, "extreme stacks cap at 120 TPS")
 near(chain.fireDelay(-0.9, 10), -0.9, "preserve an existing rate above cap")
