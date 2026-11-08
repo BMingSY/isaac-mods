@@ -6,7 +6,7 @@ local Damage = include("scripts/damage")
 local meter = Meter.new()
 local damage = Damage.new(meter)
 local lan, ownership, seed, runId
-local generation, inGame = 0, false
+local generation, inGame, wasAuthority = 0, false, false
 local owners, controllers, localOwners = {}, {}, {}
 local settings =
     { visible = true, mode = "encounter", scale = 0.65, opacity = 0.9, anchor = "bottom_left" }
@@ -48,12 +48,12 @@ local function authority()
 end
 
 local function ready()
-    return not lan or not lan:active() or lan.handle:IsReady()
+    return not lan or lan.handle:IsReady()
 end
 
-local function persist()
+local function persist(saveRun)
     stored.version, stored.settings = 1, settings
-    if inGame and authority() then
+    if inGame and (saveRun or authority()) then
         stored.seed, stored.meter = seed, meter:snapshot()
     end
     mod:SaveData(json.encode(stored))
@@ -115,7 +115,7 @@ clearReferences()
 
 local function tick()
     if lan and lan:active() then
-        local context = lan.handle:GetContext()
+        local context = lan.handle:View()
         return context and context.tick or nil
     end
     return game:GetFrameCount()
@@ -137,19 +137,20 @@ lan = include("scripts/lan")(mod, Meter, {
         return meter:snapshot()
     end,
     reset = function(context)
-        if context.reason == "session_ended" and inGame and authority() then
-            damage:flushAll()
-            meter:finish()
-            persist()
-        end
+        -- StateReset has already invalidated the old native view and entities.
         meter:finish()
+        if context.reason == "session_ended" and inGame and wasAuthority then
+            persist(true)
+        end
         localOwners = {}
         clearReferences()
         if context.reason == "session_ended" then
             inGame = false
+            wasAuthority = false
         end
     end,
     view = function(context, handle)
+        wasAuthority = handle:IsAuthority()
         if runId and runId ~= context.runId then
             meter = Meter.new()
             clearReferences()
@@ -168,7 +169,7 @@ lan = include("scripts/lan")(mod, Meter, {
 
 function mod:OnGameStarted(continued)
     registerMCM()
-    inGame, seed, runId = true, game:GetSeeds():GetStartSeed(), nil
+    inGame, seed, runId, wasAuthority = true, game:GetSeeds():GetStartSeed(), nil, false
     meter = continued and stored.seed == seed and Meter.restore(stored.meter) or Meter.new()
     localOwners = {}
     clearReferences()
@@ -230,7 +231,7 @@ mod:AddPriorityCallback(ModCallbacks.MC_NPC_UPDATE, CallbackPriority.LATE, mod.O
 mod:AddCallback(ModCallbacks.MC_POST_NPC_DEATH, mod.OnNPCUpdate)
 
 function mod:OnUpdate()
-    if not inGame then
+    if not inGame or not ready() then
         return
     end
     updateMeter()
