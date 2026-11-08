@@ -1,18 +1,22 @@
 return function(mod, Meter, callbacks)
     local api = rawget(_G, "IsaacLAN")
-    if not api or api.API_VERSION ~= 1 then
+    if not api or api.API_VERSION ~= 2 then
         return
     end
-    local lan = api:RegisterMod(mod, { id = "isaac-mods.party-dps", integrationVersion = 1 })
+    local lan = api:Attach(mod, "isaac-mods.party-dps")
     local adapter = { handle = lan, lastPoll = nil, pending = false, generation = 0 }
-    lan:RegisterAction("snapshot", {
-        version = 1,
+    local snapshotAction = lan:Action("snapshot", {
+        version = 2,
         cooldownTicks = 12,
         validate = function(payload)
             return type(payload) == "table" and next(payload) == nil
         end,
         execute = function()
-            return { status = "applied", code = Meter.encode(callbacks.snapshot()) }
+            return {
+                status = "applied",
+                code = "snapshot",
+                data = Meter.encode(callbacks.snapshot()),
+            }
         end,
     })
     lan:On("StateReset", function(context)
@@ -26,7 +30,7 @@ return function(mod, Meter, callbacks)
         if lan:IsAuthority() then
             return
         end
-        if not lan:HasHostAction("snapshot", 1) then
+        if not snapshotAction:IsAvailable() then
             adapter.status = "Host needs Party DPS"
             return
         end
@@ -35,30 +39,30 @@ return function(mod, Meter, callbacks)
         end
         adapter.pending, adapter.lastPoll = true, context.tick
         local generation = adapter.generation
-        local request, reason = lan:RequestAction("snapshot", {}, function(result)
-            if generation ~= adapter.generation then
-                return
-            end
-            adapter.pending = false
-            local snapshot = result.status == "applied" and Meter.decode(result.code)
-            if snapshot then
-                adapter.received, adapter.receivedTick = snapshot, context.tick
-                adapter.status = nil
-            else
-                adapter.status = result.status == "applied" and "Invalid DPS snapshot"
-                    or "Sync: " .. (result.code or result.status)
-            end
-        end)
-        if not request then
-            adapter.pending = false
-            adapter.status = "Sync: " .. tostring(reason)
-        end
+        snapshotAction:Request({}, {
+            onResult = function(result)
+                if generation ~= adapter.generation then
+                    return
+                end
+                adapter.pending = false
+                local snapshot = result.status == "applied" and Meter.decode(result.data)
+                if snapshot then
+                    local view = lan:View()
+                    adapter.received, adapter.receivedTick =
+                        snapshot, view and view.tick or context.tick
+                    adapter.status = nil
+                else
+                    adapter.status = result.status == "applied" and "Invalid DPS snapshot"
+                        or "Sync: " .. (result.code or result.status)
+                end
+            end,
+        })
     end)
     function adapter:active()
         return lan:IsActive()
     end
     function adapter:authority()
-        return not lan:IsActive() or lan:IsAuthority()
+        return lan:IsAuthority()
     end
     function adapter:snapshot(tick)
         if not lan:IsReady() then

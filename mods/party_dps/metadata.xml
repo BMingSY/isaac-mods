@@ -15,7 +15,7 @@ F9：解锁／锁定面板，解锁后可用鼠标拖动标题栏。
 支持 isaac-lan 联机，房主统计全队伤害并同步给队友，分房战斗也会计入。房主和需要面板的队友均需启用本 Mod。
 
 源码：https://github.com/BMingSY/isaac-mods</description>
-    <version>0.1.2</version>
+    <version>0.1.3</version>
     <visibility>Public</visibility>
     <tag id="Lua"/>
     <tag id="Tweaks"/>

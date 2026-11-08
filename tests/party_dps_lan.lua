@@ -4,6 +4,8 @@
 local verifyFloor = _PartyDPSVerifyFloor ~= false
 local verifyMCM = _PartyDPSVerifyMCM == true
 local native, api = assert(_IsaacLan), assert(IsaacLAN)
+assert(api.API_VERSION == 2, "Party DPS acceptance requires LAN API 2")
+local input = assert(_IsaacLanTestInput, "Run with the current LAN test input support")
 local host, port = _IsaacLanTest and _IsaacLanTest.host, _IsaacLanTest and _IsaacLanTest.port
 if host == nil then
     local f = assert(io.open("./lan-test-role.txt", "r"))
@@ -17,10 +19,19 @@ local function report(text)
     Isaac.DebugString("LAN_NETWORK " .. text)
 end
 local originalFrame = _IsaacLanFrame
+local originalMenu, menuReady = _IsaacLanMenuRender, false
+function _IsaacLanMenuRender(available, ...)
+    menuReady = available
+    return originalMenu(available, ...)
+end
 local frames, linked, chosen, finished = 0, false, false, false
 local checked, menuOpened, menuClosed = false, false, false
 local previewStarted, previewEnded = false, false
 local expected, hitTargets = { 0, 0 }, {}
+local baseline, postFloorDamage = {}, { 3, 6 }
+local floorRequested, postFloorTick, postFloorWait = false, nil, nil
+local postFloorTargets = {}
+local POST_FLOOR_TIMEOUT_FRAMES = 600
 local hpBefore, requested = {}, {}
 local function total(snapshot, owner)
     for _, row in ipairs(snapshot.rows) do
@@ -30,10 +41,21 @@ local function total(snapshot, owner)
     end
     return 0
 end
+local function playerForOwner(owner)
+    local handle = api:Attach(assert(PartyDPS), "isaac-mods.party-dps")
+    for index = 0, Game():GetNumPlayers() - 1 do
+        local player = Isaac.GetPlayer(index)
+        if handle:GetOwnerId(player) == owner and handle:GetPlayerId(player):match(":1$") then
+            return player
+        end
+    end
+    error("The requested Party DPS participant is missing: " .. owner)
+end
 function _IsaacLanFrame()
     frames = frames + 1
-    if not linked and frames >= (host and 300 or 360) then
+    if not linked and menuReady and frames >= (host and 300 or 360) then
         linked = true
+        _IsaacLanMenuRender = originalMenu
         _IsaacLanCommand(host and "host" or "join", host and port or "127.0.0.1:" .. port)
         report("MENU_READY")
     end
@@ -78,6 +100,9 @@ function _IsaacLanFrame()
             )
         end
         assert(not snapshot.active, "Completed encounter remained active after five idle seconds")
+        for owner = 1, 2 do
+            baseline[owner] = total(snapshot, owner)
+        end
         report(
             string.format(
                 "DPS_RESULT host=%s p1=%.3f p2=%.3f combat=%d",
@@ -105,12 +130,12 @@ function _IsaacLanFrame()
             report("CHECK native Chinese MCM registration and shared settings")
         end
     end
-    if s.prepared and s.verified >= (verifyFloor and 500 or 400) and not menuOpened then
+    if s.prepared and s.verified >= 300 and not menuOpened then
         menuOpened = true
         PartyDPS:OnCommand("partydps", "settings")
         report("CHECK DPS settings menu open")
     end
-    if s.prepared and s.verified >= (verifyFloor and 550 or 450) and not menuClosed then
+    if s.prepared and s.verified >= 350 and not menuClosed then
         menuClosed = true
         PartyDPS:OnCommand("partydps", "settings")
         report("CHECK DPS settings menu close")
@@ -120,12 +145,45 @@ function _IsaacLanFrame()
             report("CHECK native Chinese MCM menu open")
         end
     end
-    if s.prepared and s.verified >= (verifyFloor and 580 or 480) and not finished then
-        local snapshot = assert(PartyDPS:GetSnapshot())
+    if s.prepared and s.verified >= (verifyFloor and 750 or 480) and not finished then
+        local snapshot = PartyDPS:GetSnapshot()
+        if not snapshot then
+            return s
+        end
         assert(total(snapshot, 1) > 0 and total(snapshot, 2) > 0, "Lost recorded run DPS")
         if verifyFloor then
             assert(Game():GetLevel():GetStage() == 2, "Native floor transition did not complete")
+            postFloorWait = postFloorWait or frames
+            local synchronized = true
+            for owner = 1, 2 do
+                synchronized = synchronized
+                    and math.abs(
+                            total(snapshot, owner) - baseline[owner] - postFloorDamage[owner]
+                        )
+                        < 0.01
+            end
+            if not synchronized then
+                assert(
+                    frames - postFloorWait < POST_FLOOR_TIMEOUT_FRAMES,
+                    string.format(
+                        "Post-floor DPS did not settle: p1=%.3f p2=%.3f expected=%.3f/%.3f",
+                        total(snapshot, 1),
+                        total(snapshot, 2),
+                        baseline[1] + postFloorDamage[1],
+                        baseline[2] + postFloorDamage[2]
+                    )
+                )
+                return s
+            end
+            report(
+                string.format(
+                    "DPS_AFTER_FLOOR p1=%.3f p2=%.3f",
+                    total(snapshot, 1),
+                    total(snapshot, 2)
+                )
+            )
             report("CHECK native floor transition retained run DPS")
+            report("CHECK native post-floor damage and synchronization")
         else
             report("SCOPE native damage, split rooms and settings UI; floor transition excluded")
         end
@@ -141,7 +199,7 @@ end
 local gate = native.net_gate
 native.net_gate = function(capture, before, collect, restore, present, beginFloor)
     return gate(function()
-        return string.rep("\0", 34)
+        return input.neutral
     end, function(t, n, bytes)
         before(t, n, bytes)
         if t == 25 then
@@ -194,7 +252,7 @@ native.net_gate = function(capture, before, collect, restore, present, beginFloo
             for slot = 0, 1 do
                 assert(native.rooms_with_player(slot, function()
                     local target = assert(hitTargets[slot + 1])
-                    local player = Isaac.GetPlayer(0)
+                    local player = playerForOwner(slot + 1)
                     local source = player
                     if t == 100 then
                         source = player:FireTear(Vector(100, 100), Vector.Zero, false, false, false)
@@ -263,7 +321,8 @@ native.net_gate = function(capture, before, collect, restore, present, beginFloo
             )
             report("CHECK native overkill and source attribution")
         end
-        if verifyFloor and t == 400 then
+        if verifyFloor and t >= 400 and not floorRequested then
+            floorRequested = true
             assert(native.rooms_with_player(0, function()
                 for _, e in ipairs(Isaac.GetRoomEntities()) do
                     if e:IsActiveEnemy(false) then
@@ -273,6 +332,52 @@ native.net_gate = function(capture, before, collect, restore, present, beginFloo
                 Game():GetRoom():SetClear(true)
                 Game():StartStageTransition(false, 0, Isaac.GetPlayer(0))
             end))
+        end
+        if
+            verifyFloor
+            and floorRequested
+            and not postFloorTick
+            and Game():GetLevel():GetStage() == 2
+            and native.rooms_ready()
+        then
+            postFloorTick = t
+            report("DPS_AFTER_FLOOR_ISSUED tick=" .. t)
+            for slot = 0, 1 do
+                assert(native.rooms_with_player(slot, function()
+                    local target = Isaac.Spawn(
+                        EntityType.ENTITY_GAPER,
+                        0,
+                        0,
+                        Vector(450, 280),
+                        Vector.Zero,
+                        nil
+                    ):ToNPC()
+                    target.HitPoints, target.MaxHitPoints = 10, 10
+                    target:AddEntityFlags(EntityFlag.FLAG_FREEZE)
+                    postFloorTargets[slot + 1] = target
+                    assert(
+                        target:TakeDamage(
+                            postFloorDamage[slot + 1],
+                            0,
+                            EntityRef(playerForOwner(slot + 1)),
+                            0
+                        )
+                    )
+                end))
+            end
+        end
+        if postFloorTick and t == postFloorTick + 5 then
+            for slot = 0, 1 do
+                assert(native.rooms_with_player(slot, function()
+                    local target = assert(postFloorTargets[slot + 1])
+                    local loss = 10 - target.HitPoints
+                    report(string.format("DPS_AFTER_FLOOR_HP p%d loss=%.3f", slot + 1, loss))
+                    assert(
+                        math.abs(loss - postFloorDamage[slot + 1]) < 0.01,
+                        "Post-floor fixture did not cause the required native HP loss"
+                    )
+                end))
+            end
         end
     end, collect, restore, present, beginFloor)
 end

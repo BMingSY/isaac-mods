@@ -170,7 +170,7 @@ ownership:prune(301)
 check(ownership:resolve(tear) == nil, "Expired source cache was not bounded")
 
 -- Execute the production Mod callbacks in a vanilla-shaped environment.
-local function fixture(preparingLAN)
+local function fixture(preparingLAN, storedData)
     local f = { frame = 0, renders = {}, draws = {}, paints = {}, saved = nil }
     local callbacks, names = {}, 0
     local M = setmetatable({}, {
@@ -189,7 +189,10 @@ local function fixture(preparingLAN)
         self:AddCallback(id, fn)
     end
     function mod:HasData()
-        return false
+        return storedData ~= nil
+    end
+    function mod:LoadData()
+        return storedData
     end
     function mod:SaveData(value)
         f.saved = value
@@ -320,6 +323,9 @@ local function fixture(preparingLAN)
         require = function(name)
             assert(name == "json")
             return {
+                decode = function(v)
+                    return v
+                end,
                 encode = function(v)
                     return v
                 end,
@@ -327,7 +333,9 @@ local function fixture(preparingLAN)
         end,
     }, { __index = _G })
     env._G = env
-    if preparingLAN then
+    if type(preparingLAN) == "table" then
+        env.IsaacLAN = preparingLAN.api
+    elseif preparingLAN then
         local handle = {
             IsActive = function()
                 return true
@@ -341,12 +349,12 @@ local function fixture(preparingLAN)
             GetContext = function()
                 return nil
             end,
-            RegisterAction = function() end,
+            Action = function() end,
             On = function() end,
         }
         env.IsaacLAN = {
-            API_VERSION = 1,
-            RegisterMod = function()
+            API_VERSION = 2,
+            Attach = function()
                 return handle
             end,
         }
@@ -369,6 +377,9 @@ local function fixture(preparingLAN)
     end
     p1.sub, f.players = sub, { p1, p2 }
     f.p1, f.p2, f.sub, f.M = p1, p2, sub, M
+    if type(preparingLAN) == "table" then
+        preparingLAN.actors = f.players
+    end
     assert(loadfile(root .. "main.lua", "t", env))()
     f.mod, f.env = mod, env
     function f:call(id, ...)
@@ -604,6 +615,7 @@ if arg[1] then
     hm:add(1, 33)
     hm:add(2, 66)
     local h, g = adapter(host, hm:snapshot()), adapter(guest, Meter.new():snapshot())
+    check(h ~= nil and g ~= nil, "Current LAN API did not attach Party DPS")
     host.bridge.commit()
     guest.bridge.commit()
     host.bridge.actions.poll()
@@ -619,13 +631,167 @@ if arg[1] then
         "Real LAN API failed read-only result synchronization"
     )
     check(#host.logs == 0 and #guest.logs == 0, "LAN API logged integration/codec error")
+
+    -- Saturate the actual SDK queue: rejection completes synchronously inside Request.
+    for _ = 1, 8 do
+        check(g.handle:Action("snapshot"):Request({}).status == "pending", "Queue setup failed")
+    end
+    guest.tick = 30
+    guest.bridge.commit()
+    check(
+        not g.pending and g.status == "Sync: request_queue_full",
+        "Immediate rejection stuck polling"
+    )
     guest.epoch = 1
     guest.bridge.poll()
     check(not g.received, "Old snapshot survived world reset")
+
+    host.epoch = 1
+    host.bridge.poll()
+    host.bridge.commit()
+    host.bridge.actions.poll()
+    guest.bridge.actions.poll()
+    guest.bridge.commit()
+    host.bridge.actions.poll()
+    host.bridge.actions.step()
+    local late = guest.inbox
+    guest.inbox = {}
+    guest.epoch = 2
+    guest.bridge.poll()
+    guest.inbox = late
+    guest.bridge.actions.poll()
+    check(not g.received and not g.pending, "Late response resurrected a reset snapshot")
+    host.epoch = 2
+    host.bridge.poll()
+    host.bridge.commit()
+    host.bridge.actions.poll()
+    guest.bridge.actions.poll()
+    guest.bridge.commit()
     host.api:SetActionEnabled("isaac-mods.party-dps", "snapshot", false)
     host.bridge.actions.poll()
     guest.bridge.actions.poll()
     guest.bridge.commit()
     check(g.status == "Host needs Party DPS", "Missing host capability did not show a clear status")
+
+    -- Execute main.lua against the real API facade, lifecycle, actions and codec.
+    host, guest = runtime.peer(0), runtime.peer(1)
+    local personal = Meter.new()
+    personal:add(1, 77)
+    local hf = fixture(host)
+    local gf = fixture(guest, { version = 1, seed = 100, meter = personal:snapshot() })
+    hf:call(hf.M.MC_POST_GAME_STARTED, false)
+    gf:call(gf.M.MC_POST_GAME_STARTED, false)
+    local function exchange(tick)
+        host.tick, guest.tick = tick, tick
+        host.bridge.commit()
+        guest.bridge.commit()
+        host.bridge.actions.poll()
+        guest.bridge.actions.poll()
+        guest.bridge.commit()
+        host.bridge.actions.poll()
+        host.bridge.actions.step()
+        guest.bridge.actions.poll()
+        check(
+            #host.logs == 0 and #guest.logs == 0,
+            "Production LAN callback failed: "
+                .. table.concat(host.logs, ";")
+                .. table.concat(guest.logs, ";")
+        )
+    end
+    exchange(0)
+    hf:hit(hf.p1, 10, 3)
+    exchange(30)
+    hf:hit(hf.p2, 10, 5)
+    gf:hit(gf.p2, 10, 9)
+    exchange(45)
+    local shared = assert(gf.mod:GetSnapshot())
+    check(
+        shared.rows[1].total == 3 and shared.rows[2].total == 5,
+        "Production callbacks failed host attribution or counted guest replica damage"
+    )
+    gf.mod:OnCommand("partydps", "show")
+    check(gf.saved.meter.rows[1].total == 77, "Guest UI setting overwrote personal solo statistics")
+
+    host.epoch, guest.epoch = 1, 1
+    host.bridge.poll()
+    guest.bridge.poll()
+    check(gf.mod:GetSnapshot() == nil, "Guest exposed stale snapshot before rebuilt view")
+    exchange(60)
+    check(gf.mod:GetSnapshot().rows[2].total == 5, "World rebuild lost run totals")
+    hf:hit(hf.p1, 10, 3)
+    hf:hit(hf.p2, 10, 6)
+    exchange(75)
+    check(
+        gf.mod:GetSnapshot().rows[1].total == 6 and gf.mod:GetSnapshot().rows[2].total == 11,
+        "Production damage stopped accumulating after a rebuilt world"
+    )
+    for _, peer in ipairs({ host, guest }) do
+        local info = peer.env._IsaacLan.api_info
+        peer.env._IsaacLan.api_info = function()
+            local value = info()
+            value.runId = string.rep("b", 32)
+            return value
+        end
+    end
+    exchange(90)
+    check(gf.mod:GetSnapshot().rows[1].total == 0, "New LAN run reused previous damage")
+    hf:hit(hf.p1, 10, 4)
+    exchange(105)
+
+    -- Reset callbacks must never touch references from the discarded native world.
+    local pendingTarget = entity(10)
+    hf.mod:OnDamage(
+        setmetatable(pendingTarget, {
+            __index = {
+                ToNPC = function(self)
+                    return self
+                end,
+                IsActiveEnemy = function()
+                    return true
+                end,
+                IsVulnerableEnemy = function()
+                    return true
+                end,
+                HasEntityFlags = function()
+                    return false
+                end,
+            },
+        }),
+        2,
+        0,
+        { Entity = hf.p1 }
+    )
+    pendingTarget.Exists = function()
+        error("invalid old native entity")
+    end
+    host.active, guest.active = 0, 0
+    host.bridge.poll()
+    guest.bridge.poll()
+    check(#host.logs == 0 and #guest.logs == 0, "Session reset read an invalid native entity")
+    check(hf.saved.meter.rows[1].total == 4, "Host session cleanup did not preserve run results")
+    gf:call(gf.M.MC_PRE_GAME_EXIT)
+    check(gf.saved.meter.rows[1].total == 77, "Guest cleanup overwrote personal solo statistics")
+
+    local lobbyPeer = runtime.peer(1)
+    lobbyPeer.active, lobbyPeer.ready = 0, 0
+    local lobby = fixture(lobbyPeer)
+    lobby:call(lobby.M.MC_POST_GAME_STARTED, false)
+    lobby.env.Isaac.GetPlayer = function()
+        error("no native lobby players")
+    end
+    lobby:call(lobby.M.MC_POST_UPDATE)
+    lobby:call(lobby.M.MC_POST_RENDER)
+    check(#lobby.renders == 0, "LAN lobby fell back to solo HUD")
+
+    local soloPeer = runtime.peer(0)
+    soloPeer.active, soloPeer.networked, soloPeer.ready = 0, 0, 0
+    local solo = fixture(soloPeer)
+    solo:call(solo.M.MC_POST_GAME_STARTED, false)
+    solo:hit(solo.p1, 10, 2)
+    solo:hit(solo.p2, 10, 6)
+    check(
+        solo.mod:GetSnapshot().rows[1].total == 2 and solo.mod:GetSnapshot().rows[2].total == 6,
+        "Installed LAN API broke native local co-op ownership"
+    )
 end
 print("PASS Party DPS: " .. checks .. " checks")
